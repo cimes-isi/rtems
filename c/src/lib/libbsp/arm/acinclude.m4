@@ -16,6 +16,8 @@ AC_DEFUN([RTEMS_CHECK_BSPDIR],
     AC_CONFIG_SUBDIRS([edb7312]);;
   gdbarmsim )
     AC_CONFIG_SUBDIRS([gdbarmsim]);;
+  gen-r52 )
+    AC_CONFIG_SUBDIRS([gen-r52]);;
   gumstix )
     AC_CONFIG_SUBDIRS([gumstix]);;
   imx )

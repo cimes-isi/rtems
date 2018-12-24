@@ -1,0 +1,3 @@
+Overview
+--------
+This BSP describes support for a generic Cortex-R52 CPU which includes an ARM GICv3-compatible GIC.
