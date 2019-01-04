@@ -8,11 +8,14 @@
  */
 
 #include <bsp/bootcard.h>
+#include <bsp/fatal.h>
 #include <bsp/fdt.h>
 #include <bsp/irq-generic.h>
 #include <bsp/linker-symbols.h>
 
 #include <bsp/hwinfo.h>
+
+#define MAGIC_IRQ_OFFSET 32
 
 uint32_t bsp_fdt_map_intr(const uint32_t *intr, size_t icells)
 {
@@ -82,6 +85,47 @@ static void update_clocks(void)
   set_clock_by_output_name(fdt, ALT_CLK_IN_PIN_OSC2, "hps_0_eosc2-clk");
   set_clock_by_output_name(fdt, ALT_CLK_F2H_PERIPH_REF, "hps_0_f2s_periph_ref_clk-clk");
   set_clock_by_output_name(fdt, ALT_CLK_F2H_SDRAM_REF, "hps_0_f2s_sdram_ref_clk-clk");
+}
+
+rtems_vector_number gen_r52_get_irq_of_node(
+  const void *fdt,
+  int node,
+  size_t index
+)
+{
+  int len;
+  const uint32_t *val;
+
+  val = fdt_getprop(fdt, node, "interrupts", &len);
+  if (val == NULL || len < (int) ((index + 1) * 12)) {
+    return UINT32_MAX;
+  }
+
+  return fdt32_to_cpu(val[index * 3 + 1]) + MAGIC_IRQ_OFFSET;
+}
+
+void arm_generic_timer_get_config(
+  uint32_t *frequency,
+  uint32_t *irq
+)
+{
+  const void *fdt;
+  int node;
+  int len;
+  const uint32_t *val;
+
+  fdt = bsp_fdt_get();
+  node = fdt_path_offset(fdt, "/timer");
+
+  val = fdt_getprop(fdt, node, "clock-frequency", &len);
+  if (val != NULL && len >= 4) {
+    *frequency = fdt32_to_cpu(val[0]);
+  } else {
+    bsp_fatal(GEN_R52_FATAL_GENERIC_TIMER_FREQUENCY);
+  }
+
+  /* FIXME: Figure out how Linux gets a proper IRQ number */
+  *irq = gen_r52_get_irq_of_node(fdt, node, 0) - 16;
 }
 
 void bsp_start(void)
