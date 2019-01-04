@@ -27,20 +27,12 @@
 extern "C" {
 #endif /* __cplusplus */
 
+void arm_generic_timer_get_config(uint32_t *frequency, uint32_t *irq);
+
 // XXX This BSP is currently setup with a GICv1 GIC
 // Give it something so it compiles
 #define BSP_ARM_GIC_CPUIF_BASE ( 0x00000000 )
 #define BSP_ARM_GIC_DIST_BASE ( 0x00000000 )
-
-// XXX This BSP is currently setup for ARMv7 memory-mapped timer
-// Give it something so it compiles
-#define BSP_ARM_A9MPCORE_GT_BASE 0x30A05000
-#define BSP_ARM_A9MPCORE_SCU_BASE 0x30A05000
-
-// Addresses of the timer instances
-#define BSP_ARM_A9MPCORE_GT_BASE_0 0x30A05000
-#define BSP_ARM_A9MPCORE_GT_BASE_1 0x30A06000
-
 
 #ifdef __cplusplus
 }
