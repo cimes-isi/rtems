@@ -11,4 +11,6 @@
 
 void bsp_reset(void)
 {
+  __asm__ __volatile__("mov r1, #2\n"
+                       "mcr p15, 4, r1, c12, c0, 2\n");
 }
