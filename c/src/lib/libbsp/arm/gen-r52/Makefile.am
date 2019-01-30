@@ -34,7 +34,6 @@ librtemsbsp_a_SOURCES += ../../../../../../bsps/shared/start/bsp-fdt.c
 librtemsbsp_a_SOURCES += ../../../../../../bsps/shared/start/stackalloc.c
 librtemsbsp_a_SOURCES += ../../../../../../bsps/arm/shared/start/bsp-start-memcpy.S
 librtemsbsp_a_SOURCES += ../../../../../../bsps/arm/shared/cp15/arm-cp15-set-exception-handler.c
-librtemsbsp_a_SOURCES += ../../../../../../bsps/arm/shared/cp15/arm-cp15-set-ttb-entries.c
 
 # Startup
 librtemsbsp_a_SOURCES += ../../../../../../bsps/arm/gen-r52/start/bspclean.c
