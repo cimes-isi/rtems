@@ -153,7 +153,6 @@ void bsp_work_area_initialize(void)
   const void *fdt;
   Heap_Area areas[AREA_COUNT_MAX];
   size_t area_count;
-  size_t i;
 
   areas[0].begin = bsp_section_work_begin;
   areas[0].size = (uintptr_t) bsp_section_work_size;
@@ -163,14 +162,6 @@ void bsp_work_area_initialize(void)
 
   adjust_memory_size(fdt, &areas[0]);
   area_count = remove_reserved_memory(fdt, areas, area_count);
-
-  for (i = 0; i < area_count; ++i) {
-    arm_cp15_set_translation_table_entries(
-      areas[i].begin,
-      (void *) ((uintptr_t) areas[i].begin + areas[i].size),
-      ARMV7_MMU_READ_WRITE_CACHED
-    );
-  }
 
   bsp_work_area_initialize_with_table(areas, area_count);
 }
