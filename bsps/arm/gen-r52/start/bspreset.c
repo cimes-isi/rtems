@@ -11,6 +11,9 @@
 
 void bsp_reset(void)
 {
-  __asm__ __volatile__("mov r1, #2\n"
-                       "mcr p15, 4, r1, c12, c0, 2\n");
+  /* TODO(kmoore) For the time being, there is no way to cause the CPU to reset
+   * This causes a MPU fault which is buggy in QEMU and causes it to crash */
+  __asm__ __volatile__("b #0x110000\n");
+  /*__asm__ __volatile__("mov r1, #2\n"
+                       "mcr p15, 4, r1, c12, c0, 2\n");*/
 }
