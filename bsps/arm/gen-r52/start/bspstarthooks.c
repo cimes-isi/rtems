@@ -297,7 +297,7 @@ BSP_START_TEXT_SECTION void bsp_start_hook_0( void )
 
 BSP_START_TEXT_SECTION void bsp_start_hook_1( void )
 {
-  arm_cp15_set_vector_base_address(bsp_vector_table_begin);
+  arm_cp15_set_vector_base_address(bsp_start_vector_table_begin);
 
   uint32_t ctrl = arm_cp15_get_control();
   ctrl &= ~ARM_CP15_CTRL_V;
