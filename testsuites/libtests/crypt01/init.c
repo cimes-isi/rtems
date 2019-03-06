@@ -251,7 +251,9 @@ static void Init(rtems_task_argument arg)
 
 #define CONFIGURE_INITIAL_EXTENSIONS RTEMS_TEST_INITIAL_EXTENSION
 
-#define CONFIGURE_INIT_TASK_STACK_SIZE (2 * RTEMS_MINIMUM_STACK_SIZE)
+/* SHA512 needs a large stack due to 16K+ on the stack
+ * in SHA512_Transform on register-poor architectures. */
+#define CONFIGURE_INIT_TASK_STACK_SIZE (32 * 1024)
 
 #define CONFIGURE_RTEMS_INIT_TASKS_TABLE
 
