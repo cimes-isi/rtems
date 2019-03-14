@@ -29,10 +29,8 @@ extern "C" {
 
 void arm_generic_timer_get_config(uint32_t *frequency, uint32_t *irq);
 
-// XXX This BSP is currently setup with a GICv1 GIC
-// Give it something so it compiles
-#define BSP_ARM_GIC_CPUIF_BASE ( 0x00000000 )
-#define BSP_ARM_GIC_DIST_BASE ( 0x00000000 )
+#define BSP_ARM_GIC_DIST_BASE ( RTPS_GIC_BASE + 0x00000000 )
+#define BSP_ARM_GIC_REDIST_BASE ( RTPS_GIC_BASE + 0x00040000 )
 
 #ifdef __cplusplus
 }
