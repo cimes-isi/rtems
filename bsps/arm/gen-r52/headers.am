@@ -11,6 +11,7 @@ include_bsp_HEADERS += ../../../../../../bsps/arm/gen-r52/include/bsp/irq.h
 include_bsp_HEADERS += ../../../../../../bsps/arm/gen-r52/include/bsp/hpsc-busids.dtsh
 include_bsp_HEADERS += ../../../../../../bsps/arm/gen-r52/include/bsp/hpsc-irqs.dtsh
 include_bsp_HEADERS += ../../../../../../bsps/arm/gen-r52/include/bsp/hwinfo.h
+include_bsp_HEADERS += ../../../../../../bsps/arm/gen-r52/include/bsp/hpsc-arch.h
 
 include_bsp_socaldir = $(includedir)/bsp/socal
 include_bsp_socal_HEADERS =
