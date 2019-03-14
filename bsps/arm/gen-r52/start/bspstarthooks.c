@@ -9,9 +9,16 @@
 
 #include <bsp.h>
 #include <bsp/start.h>
+#include <bsp/fatal.h>
 #include <bsp/arm-cp15-start.h>
 #include <bsp/linker-symbols.h>
 #include "../../shared/cache/cacheimpl.h"
+
+#include <bsp/hwinfo.h>
+#include <bsp/irq.h>
+#include <bsp/hpsc-arch.h>
+#include <bsp/fdt.h>
+#include <libfdt.h>
 
 static int32_t get_tcm_availability( void )
 {
@@ -200,10 +207,92 @@ static void setup_tcms( void )
   }
 }
 
+#include <libchip/ns16550.h>
+extern ns16550_context gen_r52_uart_context_0;
+void set_uart_params(void)
+{
+  const void *fdt = hpsc_arch_bin;
+  int status;
+  uint32_t size;
+  int root;
+  int nic4;
+  int lsio_uart_0;
+  int lsio_uart_1;
+  fdt32_t *uart_1_reg;
+  fdt32_t *uart_1_interrupt_map;
+  int len;
+  uint32_t uart_1_address;
+  uint32_t uart_1_int_ppi;
+  uint32_t uart_1_int_offset;
+
+  status = fdt_check_header(fdt);
+  if (status != 0) {
+    bsp_fatal(GEN_R52_FATAL_UART_ADDRESS);
+  }
+
+  size = fdt_totalsize(fdt);
+  if (size != hpsc_arch_bin_size) {
+    bsp_fatal(GEN_R52_FATAL_UART_ADDRESS);
+  }
+
+  root = fdt_path_offset(fdt, "/");
+  if (root < 0) {
+    bsp_fatal(GEN_R52_FATAL_UART_ADDRESS);
+  }
+
+  nic4 = fdt_subnode_offset(fdt, root, "nic4");
+  if (nic4 < 0) {
+    bsp_fatal(GEN_R52_FATAL_UART_ADDRESS);
+  }
+
+  /* Searching for labels doesn't work because they don't get mapped in the device tree blob
+   * Searching for serial@<address> requires prior knowledge of the address
+   * Assume the 2nd serial entry in nic4 is what is desired
+   * There is no way to search for the nth entry
+   * Find the first serial entry
+   */
+  lsio_uart_0 = fdt_subnode_offset(fdt, nic4, "serial");
+  if (lsio_uart_0 < 0) {
+    bsp_fatal(GEN_R52_FATAL_UART_ADDRESS);
+  }
+
+  /* Jump to the next node */
+  lsio_uart_1 = fdt_next_node(fdt, lsio_uart_0, NULL);
+  if (lsio_uart_1 < 0) {
+    bsp_fatal(GEN_R52_FATAL_UART_ADDRESS);
+  }
+  /* Ensure that the node is also a serial node */
+  if (strncmp("serial", fdt_get_name(fdt, lsio_uart_1, NULL), strlen("serial")) != 0) {
+    bsp_fatal(GEN_R52_FATAL_UART_ADDRESS);
+  }
+
+  uart_1_reg = (fdt32_t *) fdt_getprop(fdt, lsio_uart_1, "reg", &len);
+  if (!uart_1_reg || len != 16) {
+    bsp_fatal(GEN_R52_FATAL_UART_ADDRESS);
+  }
+  uart_1_address = fdt32_to_cpu(uart_1_reg[0]);
+  gen_r52_uart_context_0.port = uart_1_address;
+
+  uart_1_interrupt_map = (fdt32_t *) fdt_getprop(fdt, lsio_uart_1, "interrupt-map", &len);
+  if (!uart_1_interrupt_map || len != 28) {
+    bsp_fatal(GEN_R52_FATAL_UART_ADDRESS);
+  }
+  uart_1_int_ppi = fdt32_to_cpu(uart_1_interrupt_map[4]);
+  uart_1_int_offset = fdt32_to_cpu(uart_1_interrupt_map[5]);
+#define GIC_EDGE_RISE 1
+#define GIC_EDGE_FALL 2
+#define GIC_EDGE_BOTH 3
+#define GIC_LVL_HI    4
+#define GIC_LVL_LO    8
+  /*uart_int_trigger = fdt32_to_cpu(uart_1_interrupt_map[6]);*/
+  gen_r52_uart_context_0.irq = (uart_1_int_ppi ? GIC_NR_SGIS : GIC_INTERNAL) + uart_1_int_offset;
+}
+
 BSP_START_TEXT_SECTION void bsp_start_hook_0( void )
 {
   /* Enable TCMs as necessary */
   setup_tcms();
+  set_uart_params();
 }
 
 BSP_START_TEXT_SECTION void bsp_start_hook_1( void )

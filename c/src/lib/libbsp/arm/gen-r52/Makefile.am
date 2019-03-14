@@ -41,6 +41,7 @@ librtemsbsp_a_SOURCES += ../../../../../../bsps/arm/gen-r52/start/bspgetworkarea
 librtemsbsp_a_SOURCES += ../../../../../../bsps/arm/gen-r52/start/bspreset.c
 librtemsbsp_a_SOURCES += ../../../../../../bsps/arm/gen-r52/start/bspstart.c
 librtemsbsp_a_SOURCES += ../../../../../../bsps/arm/gen-r52/start/bspstarthooks.c
+librtemsbsp_a_SOURCES += ../../../../../../bsps/arm/gen-r52/start/hpsc-arch.c
 if HAS_SMP
 librtemsbsp_a_SOURCES += ../../../../../../bsps/arm/shared/start/arm-a9mpcore-smp.c
 librtemsbsp_a_SOURCES += ../../../../../../bsps/arm/gen-r52/start/bspsmp.c

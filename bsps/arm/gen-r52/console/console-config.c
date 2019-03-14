@@ -39,8 +39,8 @@ ns16550_context gen_r52_uart_context_0 = {
   .base = RTEMS_TERMIOS_DEVICE_CONTEXT_INITIALIZER("UART 0"),
   .get_reg = gen_r52_uart_get_register,
   .set_reg = gen_r52_uart_set_register,
-  .port = (uintptr_t) LSIO_UART1_BASE,
-  .irq = RTPS_IRQ__LSIO_UART1_0 + GIC_INTERNAL,
+  .port = (uintptr_t) NULL,
+  .irq = 0,
   .clock = 115200,
   .initial_baud = GEN_R52_UART_BAUD
 };
