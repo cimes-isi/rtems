@@ -19,6 +19,14 @@ project_lib_DATA = start.$(OBJEXT)
 project_lib_DATA += linkcmds
 dist_project_lib_DATA += ../../../../../../bsps/arm/gen-r52/start/linkcmds
 
+
+hpsc-arch.c: ../../../../../../bsps/arm/gen-r52/start/hpsc-arch.dts
+	arm-rtems5-gcc -E -nostdinc -I$(<D)/../include/bsp -x assembler-with-cpp -o - $< |dtc -O asm > hpsc-arch.s
+	arm-rtems5-as hpsc-arch.s -o hpsc-arch.o
+	arm-rtems5-objcopy -O binary hpsc-arch.o hpsc-arch.bin
+	rtems-bin2c hpsc-arch.bin hpsc-arch.c
+project_lib_DATA += hpsc-arch.c
+
 project_lib_LIBRARIES = librtemsbsp.a
 
 librtemsbsp_a_SOURCES =
@@ -41,7 +49,7 @@ librtemsbsp_a_SOURCES += ../../../../../../bsps/arm/gen-r52/start/bspgetworkarea
 librtemsbsp_a_SOURCES += ../../../../../../bsps/arm/gen-r52/start/bspreset.c
 librtemsbsp_a_SOURCES += ../../../../../../bsps/arm/gen-r52/start/bspstart.c
 librtemsbsp_a_SOURCES += ../../../../../../bsps/arm/gen-r52/start/bspstarthooks.c
-librtemsbsp_a_SOURCES += ../../../../../../bsps/arm/gen-r52/start/hpsc-arch.c
+librtemsbsp_a_SOURCES += hpsc-arch.c
 if HAS_SMP
 librtemsbsp_a_SOURCES += ../../../../../../bsps/arm/shared/start/arm-a9mpcore-smp.c
 librtemsbsp_a_SOURCES += ../../../../../../bsps/arm/gen-r52/start/bspsmp.c
