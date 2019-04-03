@@ -34,7 +34,7 @@
 
 #define R52_TIMER_INTID (GIC_NR_SGIS + PPI_IRQ__TIMER_PHYS)
 
-#define GPT_FREQ_HZ 1000000000
+#define GPT_FREQ_HZ 125000000
 void arm_generic_timer_get_config(
   uint32_t *frequency,
   uint32_t *irq
