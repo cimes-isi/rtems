@@ -36,6 +36,7 @@
 #include <bsp/irq.h>
 #include <bsp/hpsc-arch.h>
 #include <bsp/fdt.h>
+#include <bsp/mpu.h>
 #include <libfdt.h>
 
 static int32_t get_tcm_availability( void )
@@ -306,20 +307,55 @@ void set_uart_params(void)
   gen_r52_uart_context_0.irq = (uart_1_int_ppi ? GIC_NR_SGIS : GIC_INTERNAL) + uart_1_int_offset;
 }
 
+extern char __window_start__[];
+extern char __window_end__[];
+extern char __tcm_a_start__[];
+extern char __tcm_a_end__[];
+extern char __tcm_b_start__[];
+extern char __tcm_b_end__[];
+extern char __periph_start__[];
+extern char __periph_end__[];
+extern char __hpps_ddr_low_start__[];
+extern char __hpps_ddr_low_end__[];
+extern char __rtps_ddr_low_0_start__[];
+extern char __rtps_ddr_low_0_end__[];
+extern char __rtps_ddr_low_1_start__[];
+extern char __rtps_ddr_low_1_end__[];
+extern char __hsio_start__[];
+extern char __hsio_end__[];
+extern char __hpps_mbox_start__[];
+extern char __hpps_mbox_end__[];
+
+static void setup_mpu( void )
+{
+  MPU_REGION_01(__periph_start__, __periph_end__,                 ATTR_RW_Access | ATTR_Execute_Never);
+  MPU_REGION_02(__rtps_ddr_low_0_start__, __rtps_ddr_low_0_end__, ATTR_RW_Access | ATTR_Execute_Never);
+  /* Will cause a prefetch abort if changed to read-only */
+  MPU_REGION_03(__rtps_ddr_low_1_start__, __rtps_ddr_low_1_end__, ATTR_RW_Access);
+  MPU_REGION_04(__hpps_ddr_low_start__, __hpps_ddr_low_end__,     ATTR_RW_Access | ATTR_Execute_Never);
+  MPU_REGION_05(__window_start__, __window_end__,                 ATTR_RW_Access | ATTR_Execute_Never);
+  MPU_REGION_07(__hsio_start__, __hsio_end__,                     ATTR_RW_Access | ATTR_Execute_Never);
+  MPU_REGION_08(__hpps_mbox_start__, __hpps_mbox_end__,           ATTR_RW_Access | ATTR_Execute_Never);
+  MPU_REGION_09(__tcm_a_start__, __tcm_a_end__,                   ATTR_RW_Access);
+  MPU_REGION_10(__tcm_b_start__, __tcm_b_end__,                   ATTR_RW_Access);
+}
+
 BSP_START_TEXT_SECTION void bsp_start_hook_0( void )
 {
   /* Enable TCMs as necessary */
   setup_tcms();
+
+  /* Setup MPU */
+  DISABLE_MPU();
+  setup_mpu();
+  ENABLE_MPU();
+
   set_uart_params();
 }
 
 BSP_START_TEXT_SECTION void bsp_start_hook_1( void )
 {
   arm_cp15_set_vector_base_address(bsp_start_vector_table_begin);
-
-  uint32_t ctrl = arm_cp15_get_control();
-  ctrl &= ~ARM_CP15_CTRL_V;
-  arm_cp15_set_control(ctrl);
 
   bsp_start_copy_sections();
   bsp_start_clear_bss();
