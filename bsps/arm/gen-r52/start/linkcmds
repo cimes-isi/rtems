@@ -1,7 +1,7 @@
 MEMORY {
     TCM_A (RWX) :         ORIGIN = 0x00000000, LENGTH =   0x100000
     TCM_B (RWX) :         ORIGIN = 0x00100000, LENGTH =   0x100000
-    PERIPH (RW) :         ORIGIN = 0x30000000, LENGTH = 0x10000000
+    PERIPH (RW) :         ORIGIN = 0x28000000, LENGTH = 0x18000000
 
     /* Split only to place at same place as U-boot (the higher half) */
     RTPS_DDR_LOW_0 (RWX): ORIGIN = 0x40000000, LENGTH = 0x30000000
@@ -45,6 +45,9 @@ SECTIONS
    __tcm_b_end__ = ORIGIN(TCM_B) + LENGTH(TCM_B) - 64;
    __rtps_ddr_low_0_start__ = ORIGIN(RTPS_DDR_LOW_0);
    __rtps_ddr_low_0_end__ = ORIGIN(RTPS_DDR_LOW_0) + LENGTH(RTPS_DDR_LOW_0) - 64;
+   __rtps_ddr_low_1_start__ = ORIGIN(RTPS_DDR_LOW_1);
+   __rtps_ddr_low_1_end__ = ORIGIN(RTPS_DDR_LOW_1) + LENGTH(RTPS_DDR_LOW_1) - 64;
+   __rtps_ddr_low_1_end_buffer__ = ORIGIN(RTPS_DDR_LOW_1) + LENGTH(RTPS_DDR_LOW_1) - 64 + 0x2000000;
    __periph_start__ = ORIGIN(PERIPH);
    __periph_end__ = ORIGIN(PERIPH) + LENGTH(PERIPH) - 64;
    __hpps_ddr_low_start__ = ORIGIN(HPPS_DDR_LOW);
