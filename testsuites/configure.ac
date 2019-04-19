@@ -41,7 +41,7 @@ RTEMS_CHECK_CPUOPTS([RTEMS_SMP])
 
 case $enable_tests in
 yes | samples )
-  AC_CONFIG_SUBDIRS(samples)
+  AC_CONFIG_SUBDIRS(samples hpsctests)
   ;;
 esac
 
