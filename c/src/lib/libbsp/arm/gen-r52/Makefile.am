@@ -67,6 +67,11 @@ librtemsbsp_a_SOURCES += ../../../../../../bsps/arm/gen-r52/console/console-conf
 # Clock
 librtemsbsp_a_SOURCES += ../../../../../../bsps/arm/shared/clock/clock-generic-timer.c
 
+# DMA
+librtemsbsp_a_SOURCES += ../../../../../../bsps/arm/shared/dma/dma_330.c
+librtemsbsp_a_SOURCES += ../../../../../../bsps/arm/shared/dma/alt_dma.c
+librtemsbsp_a_SOURCES += ../../../../../../bsps/arm/shared/dma/alt_dma_program.c
+
 ###############################################################################
 #                  Special Rules                                              #
 ###############################################################################

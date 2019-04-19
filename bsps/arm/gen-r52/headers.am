@@ -12,6 +12,12 @@ include_bsp_HEADERS += ../../../../../../bsps/arm/gen-r52/include/bsp/hpsc-busid
 include_bsp_HEADERS += ../../../../../../bsps/arm/gen-r52/include/bsp/hpsc-irqs.dtsh
 include_bsp_HEADERS += ../../../../../../bsps/arm/gen-r52/include/bsp/hwinfo.h
 include_bsp_HEADERS += ../../../../../../bsps/arm/gen-r52/include/bsp/hpsc-arch.h
+include_bsp_HEADERS += ../../../../../../bsps/include/bsp/dma.h
+include_bsp_HEADERS += ../../../../../../bsps/arm/include/bsp/dma_330.h
+include_bsp_HEADERS += ../../../../../../bsps/arm/include/bsp/alt_adapter.h
+include_bsp_HEADERS += ../../../../../../bsps/arm/include/bsp/alt_dma.h
+include_bsp_HEADERS += ../../../../../../bsps/arm/include/bsp/alt_dma_common.h
+include_bsp_HEADERS += ../../../../../../bsps/arm/include/bsp/alt_dma_program.h
 
 include_bsp_socaldir = $(includedir)/bsp/socal
 include_bsp_socal_HEADERS =
