@@ -32,6 +32,7 @@ RTEMS_TEST_CHECK([dma_any_channel])
 RTEMS_TEST_CHECK([dma_copy_to_register])
 RTEMS_TEST_CHECK([dma_copy_from_register])
 RTEMS_TEST_CHECK([dma_copy_hpsc_bounds])
+RTEMS_TEST_CHECK([mmu_map])
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
