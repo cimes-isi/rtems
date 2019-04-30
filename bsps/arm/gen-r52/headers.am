@@ -18,6 +18,7 @@ include_bsp_HEADERS += ../../../../../../bsps/arm/include/bsp/alt_adapter.h
 include_bsp_HEADERS += ../../../../../../bsps/arm/include/bsp/alt_dma.h
 include_bsp_HEADERS += ../../../../../../bsps/arm/include/bsp/alt_dma_common.h
 include_bsp_HEADERS += ../../../../../../bsps/arm/include/bsp/alt_dma_program.h
+include_bsp_HEADERS += ../../../../../../bsps/arm/include/bsp/mmu_500.h
 
 include_bsp_socaldir = $(includedir)/bsp/socal
 include_bsp_socal_HEADERS =

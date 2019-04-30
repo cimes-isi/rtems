@@ -72,6 +72,9 @@ librtemsbsp_a_SOURCES += ../../../../../../bsps/arm/shared/dma/dma_330.c
 librtemsbsp_a_SOURCES += ../../../../../../bsps/arm/shared/dma/alt_dma.c
 librtemsbsp_a_SOURCES += ../../../../../../bsps/arm/shared/dma/alt_dma_program.c
 
+# MMU
+librtemsbsp_a_SOURCES += ../../../../../../bsps/arm/shared/mmu/mmu_500.c
+
 ###############################################################################
 #                  Special Rules                                              #
 ###############################################################################

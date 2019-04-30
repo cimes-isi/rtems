@@ -63,6 +63,10 @@ void arm_generic_timer_get_config(uint32_t *frequency, uint32_t *irq);
 #define BSP_DMA_CHANNEL_6_IRQ	( GIC_INTERNAL + RTPS_IRQ__RTPS_DMA_EV6 )
 #define BSP_DMA_CHANNEL_7_IRQ	( GIC_INTERNAL + RTPS_IRQ__RTPS_DMA_EV7 )
 
+#define MMU_500_QEMU 1
+#define MMU_500_MAX_CONTEXTS 8
+#define MMU_500_MAX_STREAMS 8
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
