@@ -85,4 +85,22 @@ mmu_map_CPPFLAGS = $(AM_CPPFLAGS) $(TEST_FLAGS_mmu_map) \
 	$(support_includes)
 endif
 
+if TEST_wdt_poke
+hpsctests += wdt_poke
+hpsc_screens += wdt_poke/wdt_poke.scn
+hpsc_docs += wdt_poke/wdt_poke.doc
+wdt_poke_SOURCES = wdt_poke/init.c wdt_poke/system.h
+wdt_poke_CPPFLAGS = $(AM_CPPFLAGS) $(TEST_FLAGS_wdt_poke) \
+	$(support_includes)
+endif
+
+if TEST_wdt_stage_0_expire
+hpsctests += wdt_stage_0_expire
+hpsc_screens += wdt_stage_0_expire/wdt_stage_0_expire.scn
+hpsc_docs += wdt_stage_0_expire/wdt_stage_0_expire.doc
+wdt_stage_0_expire_SOURCES = wdt_stage_0_expire/init.c wdt_stage_0_expire/system.h
+wdt_stage_0_expire_CPPFLAGS = $(AM_CPPFLAGS) $(TEST_FLAGS_wdt_stage_0_expire) \
+	$(support_includes)
+endif
+
 noinst_PROGRAMS = $(hpsctests)
