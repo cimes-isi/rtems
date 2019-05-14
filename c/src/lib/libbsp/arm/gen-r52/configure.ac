@@ -74,5 +74,20 @@ RTEMS_BSPOPTS_HELP([GEN_R52_I2C0_SPEED],[speed for I2C0 in HZ])
 
 RTEMS_BSP_CLEANUP_OPTIONS
 
+AC_MSG_CHECKING(whether dtc supports --align)
+cat >tmp.dts <<_ACEOF
+/dts-v1/;
+/ {};
+_ACEOF
+DTC_ALIGN=
+if $(dtc -a 4 -O asm > /dev/null < tmp.dts); then
+	DTC_ALIGN="-a 4"
+	AC_MSG_RESULT(yes)
+else
+	AC_MSG_RESULT(no)
+fi
+AC_SUBST(DTC_ALIGN)
+rm -f tmp.dts
+
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT

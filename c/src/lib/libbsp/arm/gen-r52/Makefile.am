@@ -21,7 +21,7 @@ dist_project_lib_DATA += ../../../../../../bsps/arm/gen-r52/start/linkcmds
 
 
 hpsc-arch.c: ../../../../../../bsps/arm/gen-r52/start/hpsc-arch.dts
-	arm-rtems5-gcc -E -nostdinc -I$(<D)/../include/bsp -x assembler-with-cpp -o - $< |dtc -O asm > hpsc-arch.s
+	arm-rtems5-gcc -E -nostdinc -I$(<D)/../include/bsp -x assembler-with-cpp -o - $< |dtc ${DTC_ALIGN} -O asm > hpsc-arch.s
 	arm-rtems5-as hpsc-arch.s -o hpsc-arch.o
 	arm-rtems5-objcopy -O binary hpsc-arch.o hpsc-arch.bin
 	rtems-bin2c hpsc-arch.bin hpsc-arch.c
