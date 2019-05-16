@@ -103,4 +103,22 @@ wdt_stage_0_expire_CPPFLAGS = $(AM_CPPFLAGS) $(TEST_FLAGS_wdt_stage_0_expire) \
 	$(support_includes)
 endif
 
+if TEST_smc_sram_load
+hpsctests += smc_sram_load
+hpsc_screens += smc_sram_load/smc_sram_load.scn
+hpsc_docs += smc_sram_load/smc_sram_load.doc
+smc_sram_load_SOURCES = smc_sram_load/init.c smc_sram_load/system.h
+smc_sram_load_CPPFLAGS = $(AM_CPPFLAGS) $(TEST_FLAGS_smc_sram_load) \
+	$(support_includes)
+endif
+
+if TEST_smc_sram_load_dma
+hpsctests += smc_sram_load_dma
+hpsc_screens += smc_sram_load_dma/smc_sram_load_dma.scn
+hpsc_docs += smc_sram_load_dma/smc_sram_load_dma.doc
+smc_sram_load_dma_SOURCES = smc_sram_load_dma/init.c smc_sram_load_dma/system.h
+smc_sram_load_dma_CPPFLAGS = $(AM_CPPFLAGS) $(TEST_FLAGS_smc_sram_load_dma) \
+	$(support_includes)
+endif
+
 noinst_PROGRAMS = $(hpsctests)

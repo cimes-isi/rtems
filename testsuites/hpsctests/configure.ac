@@ -35,6 +35,8 @@ RTEMS_TEST_CHECK([dma_copy_hpsc_bounds])
 RTEMS_TEST_CHECK([mmu_map])
 RTEMS_TEST_CHECK([wdt_poke])
 RTEMS_TEST_CHECK([wdt_stage_0_expire])
+RTEMS_TEST_CHECK([smc_sram_load])
+RTEMS_TEST_CHECK([smc_sram_load_dma])
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
