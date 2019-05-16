@@ -78,6 +78,9 @@ librtemsbsp_a_SOURCES += ../../../../../../bsps/arm/shared/mmu/mmu_500.c
 # WDT
 librtemsbsp_a_SOURCES += ../../../../../../bsps/arm/gen-r52/wdt/hpsc-wdt.c
 
+# SRAM FS Driver
+librtemsbsp_a_SOURCES += ../../../../../../bsps/arm/gen-r52/smc/sramfs.c
+
 ###############################################################################
 #                  Special Rules                                              #
 ###############################################################################
