@@ -733,10 +733,12 @@
                 num-irq = <320>;
                 cpu-start-id = <1>;
                 num-cpu = <2>;
-                /* gicd-tyer: Cortex-R52 TRM (Table 9-7)                         */
+                has-security-extensions = <0>;
+
+                /* gicd-tyer: Cortex-R52 TRM r1p1 (Table 9-7)                         */
                 /*            no support of (Affinity level 3, DVIS, LPIS, MBIS) */
                 /*            IDBits 0b01001 (INTID is 10 bits)                  */
-                gicd-typer = <0x02480000>;	
+                gicd-typer = <0x0248001e>;	
 
 
                 interrupts-extended = /* signals output by the interrupt controller */
@@ -777,11 +779,13 @@
                 num-irq = <320>;
                 num-cpu = <1>;
                 cpu-start-id = <3>;
+                has-security-extensions = <1>;
                 /* gicd-tyer: based on the code (arm_gicv3_dist.c) */
                 /*            support of (Affinity level 3)        */
                 /*            no support of (DVIS, LPIS, MBIS)     */
                 /*            IDBits 0b01111 (INTID is 16 bits)    */
-                gicd-typer = <0x03780000>;	
+                /*            Security Extn (1 << 10) */
+                gicd-typer = <0x0378041e>;	
 
                 interrupts-extended = /* signals output by the interrupt controller */
                         /* IRQ * #cpus; each wired to input signal 0=IRQ on each CPU */
@@ -1027,6 +1031,7 @@
         #address-cells = <2>;
         compatible = "simple-bus";
         ranges ;
+/*	interrupt-parent = <&hpps_gic>; */
 
         hpps_gic: interrupt-controller@0xf9000000 {
                 compatible = "arm,arm-gicv3";
@@ -1042,11 +1047,14 @@
                 num-irq = <320>;
                 num-cpu = <8>;
                 cpu-start-id = <4>;
+                has-security-extensions = <1>;
                 /* gicd-tyer: based on the code (arm_gicv3_dist.c) */
-                /*            support of (Affinity level 3)        */
+                /*            support of nonzero value of (Affinity level 3)    (1 << 24)    */
                 /*            no support of (DVIS, LPIS, MBIS)     */
-                /*            IDBits 0b01111 (INTID is 16 bits)    */
-                gicd-typer = <0x03780000>;	
+                /*            IDBits 0b01111 (INTID is 16 bits) ( 0b01111 << 19)   */
+                /*            Security Extn (1 << 10) */
+		/* 	      				*/
+                gicd-typer = <0x0378041e>;	
 
                 interrupts-extended = /* signals output by the interrupt controller */
                         /* IRQ * #cpus; each wired to input signal 0=IRQ on each CPU */
@@ -1069,14 +1077,14 @@
 
                                    type    idx                bit[31:8]=bitmask of cpu set (i.e. of inputs in PPI range for each CPU)
                                                               bit[8:0]=type (8=level) */
-                        <&hpps_gic GIC_PPI PPI_IRQ__GIC_MAINT 0x0108>,
-                        <&hpps_gic GIC_PPI PPI_IRQ__GIC_MAINT 0x0208>,
-                        <&hpps_gic GIC_PPI PPI_IRQ__GIC_MAINT 0x0408>,
-                        <&hpps_gic GIC_PPI PPI_IRQ__GIC_MAINT 0x0808>,
-                        <&hpps_gic GIC_PPI PPI_IRQ__GIC_MAINT 0x1008>,
-                        <&hpps_gic GIC_PPI PPI_IRQ__GIC_MAINT 0x2008>,
-                        <&hpps_gic GIC_PPI PPI_IRQ__GIC_MAINT 0x4008>,
-                        <&hpps_gic GIC_PPI PPI_IRQ__GIC_MAINT 0x8008>;
+                        <&hpps_gic GIC_PPI PPI_IRQ__GIC_MAINT 0x0104>,
+                        <&hpps_gic GIC_PPI PPI_IRQ__GIC_MAINT 0x0204>,
+                        <&hpps_gic GIC_PPI PPI_IRQ__GIC_MAINT 0x0404>,
+                        <&hpps_gic GIC_PPI PPI_IRQ__GIC_MAINT 0x0804>,
+                        <&hpps_gic GIC_PPI PPI_IRQ__GIC_MAINT 0x1004>,
+                        <&hpps_gic GIC_PPI PPI_IRQ__GIC_MAINT 0x2004>,
+                        <&hpps_gic GIC_PPI PPI_IRQ__GIC_MAINT 0x4004>,
+                        <&hpps_gic GIC_PPI PPI_IRQ__GIC_MAINT 0x8004>;
 
                 gpios = /* input signals */
                         </* resetn */ &crf 8 /* RST_GIC */>;
@@ -1115,7 +1123,7 @@
         to_hpps_rti_timers {
             compatible = "qemu:memory-region";
             alias = <&hpps_rti_timers>;
-            reg = <0x0 0xfeed0000  0x0 0x80000 /* prio = 0 */ 0x0>;
+            reg = <0x0 0xffed0000  0x0 0x80000 /* prio = 0 */ 0x0>;
         };
 
 
@@ -1615,7 +1623,7 @@
         lsio_uart_0: serial@0x30000000 {
             compatible = "sysbus-serial"; /* 16550A */
             reg = <0x30000000  0x0 0x1000 /* prio = */ 0x0>;
-            baudrate = <115200>;
+            baudrate = <125000>;
             interrupts = <0>;
             interrupt-map-mask = <0 0 0xffff>;
             interrupt-map = <0 0 0 &trch_nvic TRCH_IRQ__LSIO_UART0_0>;
@@ -1626,7 +1634,7 @@
         lsio_uart_1: serial@0x30001000 {
             compatible = "sysbus-serial";
             reg = <0x30001000  0x0 0x1000 /* prio = */ 0x0>;
-            current-speed = <115200>;
+            current-speed = <125000>;
             interrupts = <0>;
             interrupt-map-mask = <0 0 0xffff>;
             interrupt-map = <0 0 0 &rtps_gic GIC_SPI RTPS_IRQ__LSIO_UART1_0 GIC_LVL_HI>;
@@ -1634,12 +1642,12 @@
             clocks = <&uart_clk &uart_clk>;
         };
 
-        trch_smc353: trch_smc353@0x30009000{
+        trch_smc353: trch_smc353@0x30006000{
             arm,addr25 = <0x0>;
             clock-names = "memclk", "aclk";
             clocks = <&misc_clk>, <&misc_clk>;
             compatible = "arm,pl35x";
-            reg = <0x30009000  0x0 0x1000 /* prio = */ 0x0>;
+            reg = <0x30006000  0x0 0x1000 /* prio = */ 0x0>;
             interrupts = <0>;
             interrupt-map-mask = <0 0 0xffff>;
             interrupt-map =  <0 0 0 &trch_nvic TRCH_IRQ__TRCH_SMC>;
@@ -1659,10 +1667,95 @@
 		region_size = <0x04000000>;
 		pflash_index = <0>;
 	    };
+            trch_nand: trch_nand@0x2c0000000 {
+                compatible = "nand";
+                arm,nand-cycle-t0 = <0x4>;
+                arm,nand-cycle-t1 = <0x4>;
+                arm,nand-cycle-t2 = <0x1>;
+                arm,nand-cycle-t3 = <0x2>;
+                arm,nand-cycle-t4 = <0x2>;
+                arm,nand-cycle-t5 = <0x2>;
+                arm,nand-cycle-t6 = <0x4>;
+                chip_id = <0xaa>;
+                manufacturer_id = <0x2c>;
+                drive = "";
+                label = "trch-nand";
+                status = "disabled";
+                reg = <0x2c000000 0x04000000 /* prio = 0 */ 0x0>;
+		start_addr_high = <0x0>;
+		start_addr_low= <0x2c000000>;
+		region_size = <0x04000000>;
+		pflash_index = <1>;
+            };
         };
             /* TODO: GPIO */
             /* TODO: I2C */
             /* TODO: SPI */
+        trch_i2c: i2c@0x30004000{
+            #address-cells = <1>;
+            #size-cells = <0>;
+            compatible = "xlnx,ps7-i2c-1.00.a", "cdns,i2c-r1p10";
+            reg = <0x30004000 0x1000>;
+            interrupts = <0>;
+            interrupt-map =  <0 0 0 &trch_nvic TRCH_IRQ__LSIO_I2C>;
+            clocks = <&misc_clk>;
+            i2cswitch@74 {
+                #address-cells = <1>;
+                #size-cells = <0>;
+                compatible = "nxp,pca9548";
+                reg = <0x74>;
+                i2c@0 {
+                    #address-cells = <1>;
+                    #size-cells = <0>;
+                    reg = <0>;
+                    eeprom@44 {
+                        compatible = "at,24c08";
+                        reg = <0x44>;
+                        device-index = <0x0>;
+                    };
+                    eeprom@45 {
+                        compatible = "at,24c08";
+                        reg = <0x45>;
+                        device-index = <0x1>;
+                    };
+                    eeprom@46 {
+                        compatible = "at,24c08";
+                        reg = <0x46>;
+                        device-index = <0x2>;
+                    };
+                    eeprom@47 {
+                        compatible = "at,24c08";
+                        reg = <0x47>;
+                        device-index = <0x3>;
+                    };
+                };
+            };
+        };
+        trch_spi_0: trch-spi@SPI0 {
+            #address-cells = <1>;
+            #size-cells = <0>;
+            compatible = "cdns,spi-r1p6";
+            reg = <0x30005000 0x1000>;
+            clock-names = "ref_clk", "pclk";
+            clocks = <&misc_clk>, <&misc_clk>;
+            interrupts = <0>;
+            interrupt-map =  <0 0 0 &trch_nvic TRCH_IRQ__LSIO_SPI>;
+            num-ss-bits = <2>;
+            speed-hz = <10000000>;
+            spi0_flash0: spi_flash0@0 {
+	        #address-cells = <1>;
+        	#size-cells = <1>;
+        	#bus-cells = <1>;
+        	compatible = "st,m25p80";
+        	spi-max-frequency = <50000000>;
+        	reg = <0x0 0x0>;
+                device-index = <0x4>;
+	        spi0_flash0@0x00000000 {
+        	    label = "spi0_flash0";
+        	    reg = <0x00000000 0x00100000>;
+        	};
+            };
+        };
     };
 
     nic5: nic5 {
@@ -1785,7 +1878,7 @@
         hpps_uart_0: serial@0xf92c0000 {
             compatible = "sysbus-serial"; /* 16550A */
             reg = <0xf92c0000  0x0 0x1000 /* prio = */ 0x0>;
-            baudrate = <115200>;
+            baudrate = <125000>;
             interrupts = <0>;
             interrupt-map-mask = <0 0 0xffff>;
             interrupt-map = <0 0 0 &hpps_gic GIC_SPI HPPS_IRQ__HPPS_UART0_0 GIC_LVL_HI>;
@@ -2021,7 +2114,7 @@
             compatible = "qemu:memory-region";
             device_type = "memory";
             qemu,ram = <1>;
-            reg = <0x1 0x00000000 0x0 0x80000000 /* prio = */ 0x0>;
+            reg = <0x1 0x00000000 0x0 0xC0000000 /* prio = */ 0x0>;
         };
 
         to_nic6 {
@@ -2033,7 +2126,7 @@
 
     uart_clk: uart_clk {
         #clock-cells = <0>;
-        clock-frequency = <100000000>;
+        clock-frequency = <16000000>;
         compatible = "fixed-clock";
     };
 
