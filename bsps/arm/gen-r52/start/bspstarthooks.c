@@ -233,6 +233,8 @@ void set_uart_params(void)
   const void *fdt = hpsc_arch_bin;
   int status;
   uint32_t size;
+  int32_t size_variance = 4;
+  int32_t size_diff;
   int root;
   int nic4;
   int lsio_uart_0;
@@ -250,7 +252,12 @@ void set_uart_params(void)
   }
 
   size = fdt_totalsize(fdt);
-  if (size != hpsc_arch_bin_size) {
+  /* size is the self-reported size of the FDT blob and hpsc_arch_bin_size
+   * is the size of the blob plus any necessary padding */
+  size_diff = hpsc_arch_bin_size - size;
+  /* the size of the blob plus padding must always be >= the size of the
+   * FDT self reported size */
+  if (size_diff > size_variance || size_diff < 0) {
     bsp_fatal(GEN_R52_FATAL_UART_ADDRESS);
   }
 
