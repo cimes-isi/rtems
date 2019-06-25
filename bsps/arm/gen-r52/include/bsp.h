@@ -67,6 +67,8 @@ void arm_generic_timer_get_config(uint32_t *frequency, uint32_t *irq);
 #define MMU_500_MAX_CONTEXTS 8
 #define MMU_500_MAX_STREAMS 8
 
+#define TRCH_NAND_BASE (volatile void *) 0x2c000000
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
