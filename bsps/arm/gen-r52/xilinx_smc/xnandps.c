@@ -98,13 +98,13 @@ static int XNandPs_EccHwInit(XNandPs *InstancePtr);
 
 static int XNandPs_EccSwInit(XNandPs *InstancePtr);
 
-static int XNandPs_ReadPage_HwEcc(XNandPs *InstancePtr, u8 *DstPtr);
+static int XNandPs_ReadPage_HwEcc(XNandPs *InstancePtr, u8 *DstPtr, uint32_t end_command);
 
-static int XNandPs_ReadPage(XNandPs *InstancePtr, u8 *DstPtr);
+static int XNandPs_ReadPage(XNandPs *InstancePtr, u8 *DstPtr, uint32_t end_command);
 
-static int XNandPs_WritePage_HwEcc(XNandPs *InstancePtr, u8 *SrcPtr);
+static int XNandPs_WritePage_HwEcc(XNandPs *InstancePtr, u8 *SrcPtr, uint32_t end_command);
 
-static int XNandPs_WritePage(XNandPs *InstancePtr, u8 *SrcPtr);
+static int XNandPs_WritePage(XNandPs *InstancePtr, u8 *SrcPtr, uint32_t end_command);
 
 static int XNandPs_EccCalculate(XNandPs *InstancePtr, u8 *EccData);
 
@@ -554,7 +554,11 @@ int XNandPs_Read(XNandPs *InstancePtr, u64 Offset, u32 Length, void *DestPtr,
 		/*
 		 * Send the ONFI Read command
 		 */
-		XNandPs_SendCommand(InstancePtr, &OnfiCommands[READ], Page, 0);
+		uint32_t command = READ_START;
+		if (InstancePtr->IsONFI) {
+			command = READ;
+		}
+		XNandPs_SendCommand(InstancePtr, &OnfiCommands[command], Page, 0);
 
 		/*
 		 * Poll the Memory controller status register
@@ -572,7 +576,7 @@ int XNandPs_Read(XNandPs *InstancePtr, u64 Offset, u32 Length, void *DestPtr,
 		/*
 		 *  Read the page data
 		 */
-		Status = InstancePtr->ReadPage(InstancePtr, BufPtr);
+		Status = InstancePtr->ReadPage(InstancePtr, BufPtr, READ_END);
 		if (Status != XST_SUCCESS) {
 			return Status;
 		}
@@ -771,7 +775,7 @@ int XNandPs_ReadCache(XNandPs *InstancePtr, u64 Offset, u32 Length,
 		/*
 		 *  Read the page data
 		 */
-		Status = InstancePtr->ReadPage(InstancePtr, BufPtr);
+		Status = InstancePtr->ReadPage(InstancePtr, BufPtr, 0);
 		if (Status != XST_SUCCESS) {
 			return Status;
 		}
@@ -886,15 +890,19 @@ int XNandPs_Write(XNandPs *InstancePtr, u64 Offset, u32 Length, void *SrcPtr,
 		}
 
 		/*
-		 * Send ONFI Program command
+		 * Send ONFI Program Start command
 		 */
-		XNandPs_SendCommand(InstancePtr, &OnfiCommands[PAGE_PROGRAM],
+		uint32_t command = PAGE_PROGRAM_START;
+		if (InstancePtr->IsONFI) {
+			command = PAGE_PROGRAM;
+		}
+		XNandPs_SendCommand(InstancePtr, &OnfiCommands[command],
 					Page, 0);
 
 		/*
 		 * Write the page data
 		 */
-		Status = InstancePtr->WritePage(InstancePtr, BufPtr);
+		Status = InstancePtr->WritePage(InstancePtr, BufPtr, PAGE_PROGRAM_END);
 		if (Status != XST_SUCCESS) {
 			return Status;
 		}
@@ -1012,13 +1020,17 @@ int XNandPs_WriteCache(XNandPs *InstancePtr, u64 Offset, u32 Length,
 			/*
 			 * Send ONFI Program cache command
 			 */
+			uint32_t command = PROGRAM_CACHE_START;
+			if (InstancePtr->IsONFI) {
+				command = PAGE_CACHE_PROGRAM;
+			}
 			XNandPs_SendCommand(InstancePtr,
-					&OnfiCommands[PAGE_CACHE_PROGRAM],
+					&OnfiCommands[command],
 						Page, 0);
 			/*
 			 * Write the page data
 			 */
-			Status = InstancePtr->WritePage(InstancePtr, BufPtr);
+			Status = InstancePtr->WritePage(InstancePtr, BufPtr, PROGRAM_CACHE_END);
 			if (Status != XST_SUCCESS) {
 				return Status;
 			}
@@ -1026,13 +1038,17 @@ int XNandPs_WriteCache(XNandPs *InstancePtr, u64 Offset, u32 Length,
 			/*
 			 * Send ONFI Program command
 			 */
+			uint32_t command = PAGE_PROGRAM_START;
+			if (InstancePtr->IsONFI) {
+				command = PAGE_PROGRAM;
+			}
 			XNandPs_SendCommand(InstancePtr,
-						&OnfiCommands[PAGE_PROGRAM],
+						&OnfiCommands[command],
 						Page, 0);
 			/*
 			 * Write the page data
 			 */
-			Status = InstancePtr->WritePage(InstancePtr, BufPtr);
+			Status = InstancePtr->WritePage(InstancePtr, BufPtr, PAGE_PROGRAM_END);
 			if (Status != XST_SUCCESS) {
 				return Status;
 			}
@@ -1525,7 +1541,7 @@ static int XNandPs_EccCorrect(u8 *Buf, u8 *EccCalc, u8 *EccCode)
 * @note		None
 *
 ******************************************************************************/
-static int XNandPs_ReadPage_HwEcc(XNandPs *InstancePtr, u8 *DstPtr)
+static int XNandPs_ReadPage_HwEcc(XNandPs *InstancePtr, u8 *DstPtr, uint32_t end_command)
 {
 	u32 Status;
 	u32 BytesPerPage;
@@ -1612,6 +1628,13 @@ static int XNandPs_ReadPage_HwEcc(XNandPs *InstancePtr, u8 *DstPtr)
 		EccOffset += InstancePtr->EccConfig.BytesPerBlock;
 	}
 
+	/*
+	 * Send the ONFI Read end command
+	 */
+	if (!InstancePtr->IsONFI && end_command) {
+		XNandPs_SendCommand(InstancePtr, &OnfiCommands[end_command], XNANDPS_PAGE_NOT_VALID, XNANDPS_COLUMN_NOT_VALID);
+	}
+
 	return XST_SUCCESS;
 }
 
@@ -1630,7 +1653,7 @@ static int XNandPs_ReadPage_HwEcc(XNandPs *InstancePtr, u8 *DstPtr)
 * @note		None
 *
 ******************************************************************************/
-static int XNandPs_ReadPage(XNandPs *InstancePtr, u8 *DstPtr)
+static int XNandPs_ReadPage(XNandPs *InstancePtr, u8 *DstPtr, uint32_t end_command)
 {
 	u32 Status;
 	u32 ZeroCommand;
@@ -1687,6 +1710,13 @@ static int XNandPs_ReadPage(XNandPs *InstancePtr, u8 *DstPtr)
 	SparePtr += (SpareBytesPerPage - XNANDPS_AXI_DATA_WIDTH);
 	XNandPs_ReadBuf(InstancePtr, SparePtr, XNANDPS_AXI_DATA_WIDTH);
 
+	/*
+	 * Send the ONFI Read end command
+	 */
+	if (!InstancePtr->IsONFI && end_command) {
+		XNandPs_SendCommand(InstancePtr, &OnfiCommands[end_command], XNANDPS_PAGE_NOT_VALID, XNANDPS_COLUMN_NOT_VALID);
+	}
+
 	return XST_SUCCESS;
 }
 
@@ -1705,7 +1735,7 @@ static int XNandPs_ReadPage(XNandPs *InstancePtr, u8 *DstPtr)
 * @note		None
 *
 ******************************************************************************/
-static int XNandPs_WritePage_HwEcc(XNandPs *InstancePtr, u8 *SrcPtr)
+static int XNandPs_WritePage_HwEcc(XNandPs *InstancePtr, u8 *SrcPtr, uint32_t end_command)
 {
 	u32 Status;
 	u32 BytesPerPage;
@@ -1787,6 +1817,13 @@ static int XNandPs_WritePage_HwEcc(XNandPs *InstancePtr, u8 *SrcPtr)
 				XNANDPS_MEMC_CLR_CONFIG_INT_CLR1_MASK);
 
 	/*
+	 * Send the ONFI Read end command
+	 */
+	if (!InstancePtr->IsONFI && end_command) {
+		XNandPs_SendCommand(InstancePtr, &OnfiCommands[end_command], XNANDPS_PAGE_NOT_VALID, XNANDPS_COLUMN_NOT_VALID);
+	}
+
+	/*
 	 * Check SR[0] bit
 	 */
 	Status = Onfi_CmdReadStatus(InstancePtr);
@@ -1812,7 +1849,7 @@ static int XNandPs_WritePage_HwEcc(XNandPs *InstancePtr, u8 *SrcPtr)
 * @note		None
 *
 ******************************************************************************/
-static int XNandPs_WritePage(XNandPs *InstancePtr, u8 *SrcPtr)
+static int XNandPs_WritePage(XNandPs *InstancePtr, u8 *SrcPtr, uint32_t end_command)
 {
 	u32 Status;
 	u32 DataPhaseAddr;
@@ -1843,6 +1880,13 @@ static int XNandPs_WritePage(XNandPs *InstancePtr, u8 *SrcPtr)
 	InstancePtr->DataPhaseAddr = DataPhaseAddr;
 	SparePtr += (SpareBytesPerPage - XNANDPS_AXI_DATA_WIDTH);
 	XNandPs_WriteBuf(InstancePtr, SparePtr, XNANDPS_AXI_DATA_WIDTH);
+
+	/*
+	 * Send the ONFI Read end command
+	 */
+	if (!InstancePtr->IsONFI && end_command) {
+		XNandPs_SendCommand(InstancePtr, &OnfiCommands[end_command], XNANDPS_PAGE_NOT_VALID, XNANDPS_COLUMN_NOT_VALID);
+	}
 
 	/*
 	 * Poll the Memory controller status register

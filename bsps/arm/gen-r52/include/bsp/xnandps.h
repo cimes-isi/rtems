@@ -381,6 +381,7 @@ typedef struct {
  */
 typedef struct XNandPsTag {
 	u32 IsReady;			/**< Device is initialized and ready */
+	u32 IsONFI;			/**< Device is ONFI-compliant */
 	XNandPs_Config Config;		/**< XNandPs_Config of current
 					  device */
 	XNandPs_Geometry Geometry;	/**< Part geometry */
@@ -401,9 +402,9 @@ typedef struct XNandPsTag {
 						  ECC */
 	u8 EccCode[XNANDPS_MAX_SPARE_SIZE];	/**< Buffer for stored ECC */
 	XNandPs_EccMode EccMode;		/**< ECC Mode */
-	int (*ReadPage) (struct XNandPsTag *InstancePtr, u8 *DstPtr);
+	int (*ReadPage) (struct XNandPsTag *InstancePtr, u8 *DstPtr, uint32_t end_command);
 						/**< Read Page routine */
-	int (*WritePage) (struct XNandPsTag *InstancePtr, u8 *SrcPtr);
+	int (*WritePage) (struct XNandPsTag *InstancePtr, u8 *SrcPtr, uint32_t end_command);
 						/**< Write Page routine */
 } XNandPs;
 

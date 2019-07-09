@@ -199,7 +199,13 @@ enum OnfiCommandsEnum {
 	SET_FEATURES,		/**< ONFI Set Features */
 	READ_CACHE_RANDOM,	/**< ONFI Read page cache random */
 	READ_CACHE_END_SEQ,	/**< ONFI Read page cache end */
-	PAGE_CACHE_PROGRAM	/**< ONFI Program page cache */
+	PAGE_CACHE_PROGRAM,	/**< ONFI Program page cache */
+	PAGE_PROGRAM_START,	/**< ONFI Page Program Start in split command mode */
+	PAGE_PROGRAM_END,	/**< ONFI Page Program End in split command mode */
+	READ_START,		/**< ONFI Page Read Start in split command mode */
+	READ_END,		/**< ONFI Page Read End in split command mode */
+	PROGRAM_CACHE_START,	/**< ONFI Program page cache start */
+	PROGRAM_CACHE_END,	/**< ONFI Program page cache end */
 };
 
 /**************************** Type Definitions *******************************/

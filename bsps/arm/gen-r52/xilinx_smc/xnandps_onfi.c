@@ -124,6 +124,20 @@ XNandPs_CommandFormat OnfiCommands[] = {
 	{ONFI_CMD_PAGE_CACHE_PROGRAM1, ONFI_CMD_PAGE_CACHE_PROGRAM2, 5,
 		XNANDPS_DATA_PHASE},
 					/*<< Program page cache */
+	{ONFI_CMD_PAGE_PROG1, XNANDPS_END_CMD_NONE, 5, XNANDPS_END_CMD_INVALID},
+					/*<< Page program start command format */
+	{ONFI_CMD_PAGE_PROG2, XNANDPS_END_CMD_NONE, 0, XNANDPS_END_CMD_INVALID},
+					/*<< Page program end command format */
+	{ONFI_CMD_READ1, XNANDPS_END_CMD_NONE, 5, XNANDPS_END_CMD_INVALID},
+					/*<< Read start command format */
+	{ONFI_CMD_READ2, XNANDPS_END_CMD_NONE, 0, XNANDPS_END_CMD_INVALID},
+					/*<< Read end command format */
+	{ONFI_CMD_PAGE_CACHE_PROGRAM1, XNANDPS_END_CMD_NONE, 5,
+		XNANDPS_END_CMD_INVALID},
+					/*<< Program page cache start */
+	{ONFI_CMD_PAGE_CACHE_PROGRAM2, XNANDPS_END_CMD_NONE, 0,
+		XNANDPS_END_CMD_INVALID},
+					/*<< Program page cache end */
 };
 
 /**************************************************************************/
@@ -470,6 +484,104 @@ static int Onfi_ReadParamPage(XNandPs *InstancePtr, u8 *Buf)
 
 	return XST_SUCCESS;
 }
+
+static int Onfi_Detect(XNandPs *InstancePtr)
+{
+	int Status;
+	u8 Id[ONFI_ID_LEN];
+	OnfiNand_Geometry Nand_Geometry;
+	/*
+	 * Read the ONFI ID
+	 */
+	Onfi_CmdReadId(InstancePtr, 0x20);
+	Onfi_ReadData(InstancePtr, &Id[0], ONFI_ID_LEN);
+
+	/*
+	 * Check the ONFI signature to know that the target supports
+	 * ONFI
+	 */
+	if (Id[0]!='O' || Id[1]!='N' || Id[2]!='F' || Id[3]!='I') {
+		return XST_FAILURE;
+	}
+	/* Read the parameter page structure */
+	Status = Onfi_ReadParamPage(InstancePtr,
+			(u8 *)&Nand_Geometry);
+	if (Status == XST_FAILURE) {
+		return Status;
+	}
+	InstancePtr->Geometry.NumLun =
+		Nand_Geometry.NumLuns;
+	InstancePtr->Geometry.PagesPerBlock =
+		Nand_Geometry.PagesPerBlock;
+	InstancePtr->Geometry.SpareBytesPerPage =
+		Nand_Geometry.SpareBytesPerPage;
+	InstancePtr->Geometry.BytesPerPage =
+		Nand_Geometry.BytesPerPage;
+	InstancePtr->Geometry.BlocksPerLun =
+		Nand_Geometry.BlocksPerLun;
+	InstancePtr->Geometry.NumBlocks =
+		(Nand_Geometry.NumLuns *
+		 InstancePtr->Geometry.BlocksPerLun);
+	InstancePtr->Geometry.NumPages =
+		(Nand_Geometry.NumLuns *
+		 Nand_Geometry.BlocksPerLun *
+		 Nand_Geometry.PagesPerBlock);
+	InstancePtr->Geometry.BlockSize =
+		 (Nand_Geometry.PagesPerBlock *
+		 Nand_Geometry.BytesPerPage);
+	InstancePtr->Geometry.DeviceSize =
+		(InstancePtr->Geometry.NumBlocks *
+		 InstancePtr->Geometry.PagesPerBlock *
+		 InstancePtr->Geometry.BytesPerPage);
+	/*
+	 * Calculate the address cycles
+	 */
+	InstancePtr->Geometry.RowAddrCycles =
+		(Nand_Geometry.AddrCycles & 0xf);
+	InstancePtr->Geometry.ColAddrCycles =
+		((Nand_Geometry.AddrCycles >> 4) & 0xf);
+
+	InstancePtr->Geometry.FlashWidth =
+		(Nand_Geometry.Features & 0x1) ?
+			XNANDPS_FLASH_WIDTH_16 :
+			XNANDPS_FLASH_WIDTH_8;
+
+	InstancePtr->Features.ProgramCache =
+		(Nand_Geometry.OptionalCmds & 0x1) ? 1:0;
+	InstancePtr->Features.ReadCache =
+		(Nand_Geometry.OptionalCmds & 0x2) ? 1:0;
+
+	InstancePtr->IsONFI = 1;
+	return Status;
+}
+
+static int Known_Detect(XNandPs *InstancePtr, u8 Id[8])
+{
+	if (Id[1] != 0xaa) {
+		return XST_FAILURE;
+	}
+	InstancePtr->Geometry.BytesPerPage = 1024 << (Id[3] & 0x3);
+	InstancePtr->Geometry.SpareBytesPerPage = (InstancePtr->Geometry.BytesPerPage >> 9) * (8 << ((Id[3] & 0xc) >> 2));
+	InstancePtr->Geometry.BlockSize = (64 * 1024) << ((Id[3] & 0x30) >> 4);
+	InstancePtr->Geometry.PagesPerBlock = InstancePtr->Geometry.BlockSize / InstancePtr->Geometry.BytesPerPage;
+	InstancePtr->Geometry.NumBlocks = 256 * 1024 / (InstancePtr->Geometry.BlockSize / 1024);
+	InstancePtr->Geometry.NumPages = InstancePtr->Geometry.NumBlocks * InstancePtr->Geometry.PagesPerBlock;
+	InstancePtr->Geometry.DeviceSize =
+		(InstancePtr->Geometry.NumBlocks *
+		 InstancePtr->Geometry.PagesPerBlock *
+		 InstancePtr->Geometry.BytesPerPage);
+	/*
+	 * Calculate the address cycles
+	 */
+	/* Address cycles for the emulated NAND chip known to be 0x23 */
+	u8 addr_cycles = 0x23;
+	InstancePtr->Geometry.RowAddrCycles =
+		(addr_cycles & 0xf);
+	InstancePtr->Geometry.ColAddrCycles =
+		((addr_cycles >> 4) & 0xf);
+	InstancePtr->IsONFI = 0;
+	return XST_SUCCESS;
+}
 /**************************************************************************/
 /**
 *
@@ -487,12 +599,9 @@ static int Onfi_ReadParamPage(XNandPs *InstancePtr, u8 *Buf)
 int Onfi_NandInit(XNandPs *InstancePtr)
 {
 	u32 Target;
-	int Status;
-	u8 Id[ONFI_ID_LEN];
-	u8 JedecId[2];
+	u8 Id[8];
 	u8 EccSetFeature[4] = {0x08, 0x00, 0x00, 0x00};
 	u8 EccGetFeature[4];
-	OnfiNand_Geometry Nand_Geometry;
 
 	Xil_AssertNonvoid(InstancePtr != NULL);
 
@@ -503,151 +612,97 @@ int Onfi_NandInit(XNandPs *InstancePtr)
 		Onfi_CmdReset(InstancePtr);
 
 		/*
-		 * Read the ONFI ID
+		 * Read ID information
 		 */
-		Onfi_CmdReadId(InstancePtr, 0x20);
-		Onfi_ReadData(InstancePtr, &Id[0], ONFI_ID_LEN);
+		Onfi_CmdReadId(InstancePtr, 0x00);
+		Onfi_ReadData(InstancePtr, Id, 8);
 
-		/*
-		 * Check the ONFI signature to know that the target supports
-		 * ONFI
-		 */
-		if (Id[0]=='O' && Id[1]=='N' && Id[2]=='F' && Id[3]=='I') {
-			/* Read the parameter page structure */
-			Status = Onfi_ReadParamPage(InstancePtr,
-					(u8 *)&Nand_Geometry);
-			if (Status != XST_FAILURE) {
-				InstancePtr->Geometry.NumLun =
-					Nand_Geometry.NumLuns;
-				InstancePtr->Geometry.PagesPerBlock =
-					Nand_Geometry.PagesPerBlock;
-				InstancePtr->Geometry.SpareBytesPerPage =
-					Nand_Geometry.SpareBytesPerPage;
-				InstancePtr->Geometry.BytesPerPage =
-					Nand_Geometry.BytesPerPage;
-				InstancePtr->Geometry.BlocksPerLun =
-					Nand_Geometry.BlocksPerLun;
-				InstancePtr->Geometry.NumBlocks =
-					(Nand_Geometry.NumLuns *
-					 InstancePtr->Geometry.BlocksPerLun);
-				InstancePtr->Geometry.NumPages =
-					(Nand_Geometry.NumLuns *
-					 Nand_Geometry.BlocksPerLun *
-					 Nand_Geometry.PagesPerBlock);
-				InstancePtr->Geometry.BlockSize =
-					 (Nand_Geometry.PagesPerBlock *
-					 Nand_Geometry.BytesPerPage);
-				InstancePtr->Geometry.DeviceSize =
-					(InstancePtr->Geometry.NumBlocks *
-					 InstancePtr->Geometry.PagesPerBlock *
-					 InstancePtr->Geometry.BytesPerPage);
-				/*
-				 * Calculate the address cycles
-				 */
-				InstancePtr->Geometry.RowAddrCycles =
-					(Nand_Geometry.AddrCycles & 0xf);
-				InstancePtr->Geometry.ColAddrCycles =
-					((Nand_Geometry.AddrCycles >> 4) & 0xf);
-
-				OnfiCommands[READ].AddrCycles =
-						(InstancePtr->Geometry.RowAddrCycles +
-						InstancePtr->Geometry.ColAddrCycles);
-
-				OnfiCommands[PAGE_PROGRAM].AddrCycles =
-						(InstancePtr->Geometry.RowAddrCycles +
-						InstancePtr->Geometry.ColAddrCycles);
-
-				OnfiCommands[BLOCK_ERASE].AddrCycles =
-						InstancePtr->Geometry.RowAddrCycles;
-
-				OnfiCommands[CHANGE_READ_COLUMN].AddrCycles =
-						InstancePtr->Geometry.ColAddrCycles;
-
-				OnfiCommands[CHANGE_WRITE_COLUMN].AddrCycles =
-						InstancePtr->Geometry.ColAddrCycles;
-				/*
-				 * Read JEDEC ID
-				 */
-				Onfi_CmdReadId(InstancePtr, 0x00);
-				Onfi_ReadData(InstancePtr, &JedecId[0], 2);
-
-				if ((JedecId[0] == 0x2C) &&
-						/* 1 Gb flash devices */
-						((JedecId[1] == 0xF1) ||
-						(JedecId[1] == 0xA1) ||
-						(JedecId[1] == 0xB1) ||
-						/* 2 Gb flash devices */
-						(JedecId[1] == 0xAA) ||
-						(JedecId[1] == 0xBA) ||
-						(JedecId[1] == 0xDA) ||
-						(JedecId[1] == 0xCA) ||
-						/* 4 Gb flash devices */
-						(JedecId[1] == 0xAC) ||
-						(JedecId[1] == 0xBC) ||
-						(JedecId[1] == 0xDC) ||
-						(JedecId[1] == 0xCC) ||
-						/* 8 Gb flash devices */
-						(JedecId[1] == 0xA3) ||
-						(JedecId[1] == 0xB3) ||
-						(JedecId[1] == 0xD3) ||
-						(JedecId[1] == 0xC3))) {
-					/*
-					 * Check if this flash supports On-Die ECC.
-					 * Micron Flash: MT29F1G08ABADA, MT29F1G08ABBDA
-					 *		 MT29F1G16ABBDA,
-					 *		 MT29F2G08ABBEA, MT29F2G16ABBEA,
-					 *		 MT29F2G08ABAEA, MT29F2G16ABAEA,
-					 *		 MT29F4G08ABBDA, MT29F4G16ABBDA,
-					 *		 MT29F4G08ABADA, MT29F4G16ABADA,
-					 *		 MT29F8G08ADBDA, MT29F8G16ADBDA,
-					 *		 MT29F8G08ADADA, MT29F8G16ADADA
-					 */
-
-					Onfi_SetFeature(InstancePtr, 0x90,
-								&EccSetFeature[0]);
-					/* Check to see if ECC feature is set */
-					Onfi_GetFeature(InstancePtr, 0x90,
-								&EccGetFeature[0]);
-					if (EccGetFeature[0] & 0x08) {
-						InstancePtr->EccMode = XNANDPS_ECC_ONDIE;
-					} else {
-						InstancePtr->EccMode = XNANDPS_ECC_HW;
-					}
-				} else if (Nand_Geometry.BytesPerPage < 512 ||
-					Nand_Geometry.BytesPerPage > 2048) {
-					/*
-					 * This controller doesn't support ECC for
-					 * page size < 512 & > 2048 bytes.
-					 */
-					InstancePtr->EccMode = XNANDPS_ECC_NONE;
-				} else {
-					/* SMC controller ECC (1-bit correction) */
-					InstancePtr->EccMode = XNANDPS_ECC_HW;
-				}
-				/*
-				 * Updating the instance flash width after checking
-				 * for on-die ECC
-				 */
-				InstancePtr->Geometry.FlashWidth =
-					(Nand_Geometry.Features & 0x1) ?
-						XNANDPS_FLASH_WIDTH_16 :
-						XNANDPS_FLASH_WIDTH_8;
-				/*
-				 * Features and Optional commands supported.
-				 * On-Die ECC flash doesn't support these
-				 * commands when ECC is enabled.
-				 */
-				if (InstancePtr->EccMode != XNANDPS_ECC_ONDIE) {
-					InstancePtr->Features.ProgramCache =
-						(Nand_Geometry.OptionalCmds & 0x1) ? 1:0;
-					InstancePtr->Features.ReadCache =
-						(Nand_Geometry.OptionalCmds & 0x2) ? 1:0;
-				}
-			} else {
-				return XST_FAILURE;
-			}
-		} else {
+		if (Onfi_Detect(InstancePtr) == XST_FAILURE && Known_Detect(InstancePtr, Id) == XST_FAILURE) {
 			return XST_FAILURE;
+		}
+
+		OnfiCommands[READ].AddrCycles =
+				(InstancePtr->Geometry.RowAddrCycles +
+				InstancePtr->Geometry.ColAddrCycles);
+
+		OnfiCommands[PAGE_PROGRAM].AddrCycles =
+				(InstancePtr->Geometry.RowAddrCycles +
+				InstancePtr->Geometry.ColAddrCycles);
+
+		OnfiCommands[BLOCK_ERASE].AddrCycles =
+				InstancePtr->Geometry.RowAddrCycles;
+
+		OnfiCommands[CHANGE_READ_COLUMN].AddrCycles =
+				InstancePtr->Geometry.ColAddrCycles;
+
+		OnfiCommands[CHANGE_WRITE_COLUMN].AddrCycles =
+				InstancePtr->Geometry.ColAddrCycles;
+
+		OnfiCommands[PAGE_PROGRAM_START].AddrCycles =
+				(InstancePtr->Geometry.RowAddrCycles +
+				InstancePtr->Geometry.ColAddrCycles);
+
+		if ((Id[0] == 0x2C) &&
+				/* 1 Gb flash devices */
+				((Id[1] == 0xF1) ||
+				(Id[1] == 0xA1) ||
+				(Id[1] == 0xB1) ||
+				/* 2 Gb flash devices */
+				(Id[1] == 0xAA) ||
+				(Id[1] == 0xBA) ||
+				(Id[1] == 0xDA) ||
+				(Id[1] == 0xCA) ||
+				/* 4 Gb flash devices */
+				(Id[1] == 0xAC) ||
+				(Id[1] == 0xBC) ||
+				(Id[1] == 0xDC) ||
+				(Id[1] == 0xCC) ||
+				/* 8 Gb flash devices */
+				(Id[1] == 0xA3) ||
+				(Id[1] == 0xB3) ||
+				(Id[1] == 0xD3) ||
+				(Id[1] == 0xC3))) {
+			/*
+			 * Check if this flash supports On-Die ECC.
+			 * Micron Flash: MT29F1G08ABADA, MT29F1G08ABBDA
+			 *		 MT29F1G16ABBDA,
+			 *		 MT29F2G08ABBEA, MT29F2G16ABBEA,
+			 *		 MT29F2G08ABAEA, MT29F2G16ABAEA,
+			 *		 MT29F4G08ABBDA, MT29F4G16ABBDA,
+			 *		 MT29F4G08ABADA, MT29F4G16ABADA,
+			 *		 MT29F8G08ADBDA, MT29F8G16ADBDA,
+			 *		 MT29F8G08ADADA, MT29F8G16ADADA
+			 */
+
+			Onfi_SetFeature(InstancePtr, 0x90,
+						&EccSetFeature[0]);
+			/* Check to see if ECC feature is set */
+			Onfi_GetFeature(InstancePtr, 0x90,
+						&EccGetFeature[0]);
+			if (EccGetFeature[0] & 0x08) {
+				InstancePtr->EccMode = XNANDPS_ECC_ONDIE;
+			} else {
+				InstancePtr->EccMode = XNANDPS_ECC_HW;
+			}
+		} else if (InstancePtr->Geometry.BytesPerPage < 512 ||
+			InstancePtr->Geometry.BytesPerPage > 2048) {
+			/*
+			 * This controller doesn't support ECC for
+			 * page size < 512 & > 2048 bytes.
+			 */
+			InstancePtr->EccMode = XNANDPS_ECC_NONE;
+		} else {
+			/* SMC controller ECC (1-bit correction) */
+			InstancePtr->EccMode = XNANDPS_ECC_HW;
+		}
+		/*
+		 * Features and Optional commands supported.
+		 * On-Die ECC flash doesn't support these
+		 * commands when ECC is enabled.
+		 */
+		if (InstancePtr->EccMode == XNANDPS_ECC_ONDIE) {
+			InstancePtr->Features.ProgramCache = 0;
+			InstancePtr->Features.ReadCache = 0;
 		}
 	}
 
