@@ -77,6 +77,12 @@ librtemsbsp_a_SOURCES += ../../../../../../bsps/arm/shared/mmu/mmu_500.c
 
 # SMC
 librtemsbsp_a_SOURCES += ../../../../../../bsps/arm/shared/smc/smc_353.c
+librtemsbsp_a_SOURCES += ../../../../../../bsps/arm/gen-r52/xilinx_smc/xnandps_bbm.c
+librtemsbsp_a_SOURCES += ../../../../../../bsps/arm/gen-r52/xilinx_smc/xnandps.c
+librtemsbsp_a_SOURCES += ../../../../../../bsps/arm/gen-r52/xilinx_smc/xnandps_onfi.c
+librtemsbsp_a_SOURCES += ../../../../../../bsps/arm/gen-r52/xilinx_smc/xil_io.c
+librtemsbsp_a_SOURCES += ../../../../../../bsps/arm/gen-r52/xilinx_smc/xil_assert.c
+librtemsbsp_a_SOURCES += ../../../../../../bsps/arm/gen-r52/xilinx_smc/xil_printf.c
 
 # WDT
 librtemsbsp_a_SOURCES += ../../../../../../bsps/arm/gen-r52/wdt/hpsc-wdt.c
