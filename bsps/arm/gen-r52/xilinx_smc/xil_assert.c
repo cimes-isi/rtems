@@ -45,8 +45,12 @@
 
 /***************************** Include Files *********************************/
 
+#if 0
 #include "xil_types.h"
 #include "xil_assert.h"
+#endif
+#include <bsp/xil_types.h>
+#include <bsp/xil_assert.h>
 
 /************************** Constant Definitions *****************************/
 

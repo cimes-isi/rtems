@@ -79,9 +79,14 @@
 ******************************************************************************/
 
 /***************************** Include Files *********************************/
+#if 0
 #include "xnandps.h"
 #include "xnandps_bbm.h"
 #include "xnandps_onfi.h"
+#endif
+#include <bsp/xnandps.h>
+#include <bsp/xnandps_bbm.h>
+#include <bsp/xnandps_onfi.h>
 /************************** Constant Definitions *****************************/
 
 /**************************** Type Definitions *******************************/

@@ -52,8 +52,12 @@
 
 /***************************** Include Files *********************************/
 #include <string.h>	/**< For memcpy and memset */
+#if 0
 #include "xil_types.h"
 #include "xnandps_bbm.h"
+#endif
+#include <bsp/xil_types.h>
+#include <bsp/xnandps_bbm.h>
 
 /************************** Constant Definitions *****************************/
 

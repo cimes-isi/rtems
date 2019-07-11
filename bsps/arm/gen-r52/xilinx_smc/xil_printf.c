@@ -5,9 +5,14 @@
 /* For Embedded Systems Programming, 1991            */
 /*                                                   */
 /*---------------------------------------------------*/
+#if 0
 #include "xil_printf.h"
 #include "xil_types.h"
 #include "xil_assert.h"
+#endif
+#include <bsp/xil_printf.h>
+#include <bsp/xil_types.h>
+#include <bsp/xil_assert.h>
 #include <ctype.h>
 #include <string.h>
 #include <stdarg.h>
