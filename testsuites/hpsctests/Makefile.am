@@ -121,4 +121,13 @@ smc_sram_load_dma_CPPFLAGS = $(AM_CPPFLAGS) $(TEST_FLAGS_smc_sram_load_dma) \
 	$(support_includes)
 endif
 
+if TEST_smc_nand_write
+hpsctests += smc_nand_write
+hpsc_screens += smc_nand_write/smc_nand_write.scn
+hpsc_docs += smc_nand_write/smc_nand_write.doc
+smc_nand_write_SOURCES = smc_nand_write/init.c smc_nand_write/system.h
+smc_nand_write_CPPFLAGS = $(AM_CPPFLAGS) $(TEST_FLAGS_smc_nand_write) \
+	$(support_includes)
+endif
+
 noinst_PROGRAMS = $(hpsctests)
