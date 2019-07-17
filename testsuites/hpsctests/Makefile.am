@@ -130,4 +130,13 @@ smc_nand_write_CPPFLAGS = $(AM_CPPFLAGS) $(TEST_FLAGS_smc_nand_write) \
 	$(support_includes)
 endif
 
+if TEST_smc_nand_block
+hpsctests += smc_nand_block
+hpsc_screens += smc_nand_block/smc_nand_block.scn
+hpsc_docs += smc_nand_block/smc_nand_block.doc
+smc_nand_block_SOURCES = smc_nand_block/init.c smc_nand_block/system.h
+smc_nand_block_CPPFLAGS = $(AM_CPPFLAGS) $(TEST_FLAGS_smc_nand_block) \
+	$(support_includes)
+endif
+
 noinst_PROGRAMS = $(hpsctests)

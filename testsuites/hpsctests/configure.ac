@@ -38,6 +38,7 @@ RTEMS_TEST_CHECK([wdt_stage_0_expire])
 RTEMS_TEST_CHECK([smc_sram_load])
 RTEMS_TEST_CHECK([smc_sram_load_dma])
 RTEMS_TEST_CHECK([smc_nand_write])
+RTEMS_TEST_CHECK([smc_nand_block])
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
