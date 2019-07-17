@@ -83,6 +83,7 @@ librtemsbsp_a_SOURCES += ../../../../../../bsps/arm/gen-r52/xilinx_smc/xnandps_o
 librtemsbsp_a_SOURCES += ../../../../../../bsps/arm/gen-r52/xilinx_smc/xil_io.c
 librtemsbsp_a_SOURCES += ../../../../../../bsps/arm/gen-r52/xilinx_smc/xil_assert.c
 librtemsbsp_a_SOURCES += ../../../../../../bsps/arm/gen-r52/xilinx_smc/xil_printf.c
+librtemsbsp_a_SOURCES += ../../../../../../bsps/arm/gen-r52/xilinx_smc/xnandps_blkdev.c
 
 # WDT
 librtemsbsp_a_SOURCES += ../../../../../../bsps/arm/gen-r52/wdt/hpsc-wdt.c
