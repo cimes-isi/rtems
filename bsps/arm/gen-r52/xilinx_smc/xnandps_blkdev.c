@@ -172,23 +172,29 @@ XNandPs_ioctl(rtems_disk_device *dd, uint32_t req, void *argp)
   rtems_blkdev_request *r = argp;
   XNandPs *NandInstPtr = rtems_disk_get_driver_data(dd);
 
+  rtems_mutex_lock(&NandInstPtr->lock);
+
   switch (req) {
     case RTEMS_BLKIO_REQUEST:
       switch (r->req) {
         case RTEMS_BLKDEV_REQ_READ:
           errno = XNandPs_read(NandInstPtr, r);
-          return 0;
+          break;
         case RTEMS_BLKDEV_REQ_WRITE:
           errno = XNandPs_write(NandInstPtr, r);
-          return 0;
+          break;
         default:
           errno = EINVAL;
-          return -1;
+          break;
       }
+      break;
 
     default:
-      return rtems_blkdev_ioctl(dd, req, argp);
+      errno = rtems_blkdev_ioctl(dd, req, argp);
+      break;
   }
+
+  rtems_mutex_unlock(&NandInstPtr->lock);
 
   return errno == 0 ? 0 : -1;
 }

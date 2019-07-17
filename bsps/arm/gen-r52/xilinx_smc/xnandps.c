@@ -181,6 +181,11 @@ int XNandPs_CfgInitialize(XNandPs *InstancePtr, XNandPs_Config *ConfigPtr,
 	Xil_AssertNonvoid(ConfigPtr != NULL);
 
 	/*
+	 * Initialize lock
+	 */
+	rtems_mutex_init (&InstancePtr->lock, "NAND Instance");
+
+	/*
 	 * Set the values read from the device config and the base address.
 	 */
 	InstancePtr->Config.DeviceId = ConfigPtr->DeviceId;

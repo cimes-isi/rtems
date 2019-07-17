@@ -194,6 +194,7 @@ extern "C" {
 #include "xil_io.h"
 #include "xstatus.h"
 #include "xnandps_hw.h"
+#include <rtems/thread.h>
 /************************** Constant Definitions *****************************/
 #define XNANDPS_MAX_TARGETS		1	/**< Max number of targets
 						  supported */
@@ -406,6 +407,7 @@ typedef struct XNandPsTag {
 						/**< Read Page routine */
 	int (*WritePage) (struct XNandPsTag *InstancePtr, u8 *SrcPtr, uint32_t end_command);
 						/**< Write Page routine */
+	rtems_mutex lock;		/**< Mutex for threading protection.*/
 } XNandPs;
 
 /**
