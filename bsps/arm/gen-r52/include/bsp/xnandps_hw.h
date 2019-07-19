@@ -58,6 +58,7 @@ extern "C" {
 /***************************** Include Files *********************************/
 
 
+#if 0
 /************************** Constant Definitions *****************************/
 
 /*
@@ -551,6 +552,7 @@ extern "C" {
 			/**< Primecell identification register mask */
 /* @} */
 
+#endif
 /**************************** Type Definitions *******************************/
 
 /***************** Macros (Inline Functions) Definitions *********************/

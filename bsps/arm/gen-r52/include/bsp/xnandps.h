@@ -195,6 +195,7 @@ extern "C" {
 #include "xstatus.h"
 #include "xnandps_hw.h"
 #include <rtems/thread.h>
+#include <bsp/smc_353.h>
 /************************** Constant Definitions *****************************/
 #define XNANDPS_MAX_TARGETS		1	/**< Max number of targets
 						  supported */
@@ -259,6 +260,7 @@ extern "C" {
 						  position mask, bits[0:2] of
 						  error code */
 
+#if 0
 /* Flash memory controller operating parameters */
 #define XNANDPS_CLR_CONFIG	\
 			((XNANDPS_MEMC_CLR_CONFIG_INT_DISABLE1_MASK)	| \
@@ -285,6 +287,7 @@ extern "C" {
 		(0xE0 << XNANDPS_ECC_MEMCOMMAND2_RD_COL_CHANGE_END_SHIFT) | \
 	(0x1 << XNANDPS_ECC_MEMCOMMAND2_RD_COL_CHANGE_END_VALID_SHIFT))
 			/**< ECC command 2 settings */
+#endif
 
 #define XNANDPS_CLR_CS		(0x1 << XNANDPS_CLEAR_CS_SHIFT)
 				/**< set Clear chip select */
@@ -408,6 +411,7 @@ typedef struct XNandPsTag {
 	int (*WritePage) (struct XNandPsTag *InstancePtr, u8 *SrcPtr, uint32_t end_command);
 						/**< Write Page routine */
 	rtems_mutex lock;		/**< Mutex for threading protection.*/
+	SMC_353_Config_t SmcDriver;	/**< SMC-353 driver.*/
 } XNandPs;
 
 /**

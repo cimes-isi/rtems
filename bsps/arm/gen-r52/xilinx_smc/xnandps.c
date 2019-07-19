@@ -119,11 +119,13 @@ static int XNandPs_IsBusy(XNandPs *InstancePtr);
 void XNandPs_SendCommand(XNandPs *InstancePtr, XNandPs_CommandFormat
 		*Command, int Page, int Column);
 
+#if 0
 static void XNandPs_EccSetCfg(XNandPs *InstancePtr, u32 EccConfig);
 
 static void XNandPs_EccSetMemCmd1(XNandPs *InstancePtr, u32 EccCmd);
 
 static void XNandPs_EccSetMemCmd2(XNandPs *InstancePtr, u32 EccCmd);
+#endif
 
 static void XNandPs_EccDisable(XNandPs *InstancePtr);
 
@@ -193,9 +195,12 @@ int XNandPs_CfgInitialize(XNandPs *InstancePtr, XNandPs_Config *ConfigPtr,
 	InstancePtr->Config.FlashBase = FlashBaseAddr;
 	InstancePtr->Config.FlashWidth = ConfigPtr->FlashWidth;
 
+#if 0
 	XNandPs_WriteReg(InstancePtr->Config.SmcBase +
 		XNANDPS_MEMC_CLR_CONFIG_OFFSET,
 		XNANDPS_CLR_CONFIG);	/* Disable interrupts */
+#endif
+	smc_353_init(&InstancePtr->SmcDriver, (void *)SmcBaseAddr);
 
 	/*
 	 * ONFI query to get geometry
@@ -282,6 +287,7 @@ int XNandPs_CfgInitialize(XNandPs *InstancePtr, XNandPs_Config *ConfigPtr,
 * @note		None
 *
 *****************************************************************************/
+#if 0
 static void XNandPs_EccSetCfg(XNandPs *InstancePtr, u32 EccConfig)
 {
 	/*
@@ -297,6 +303,7 @@ static void XNandPs_EccSetCfg(XNandPs *InstancePtr, u32 EccConfig)
 		(XNANDPS_ECC_MEMCFG_OFFSET(XNANDPS_IF1_ECC_OFFSET)),
 		EccConfig);
 }
+#endif
 
 /*****************************************************************************/
 /**
@@ -311,6 +318,7 @@ static void XNandPs_EccSetCfg(XNandPs *InstancePtr, u32 EccConfig)
 * @note		None
 *
 *****************************************************************************/
+#if 0
 static void XNandPs_EccSetMemCmd1(XNandPs *InstancePtr, u32 EccCmd)
 {
 	/*
@@ -320,6 +328,7 @@ static void XNandPs_EccSetMemCmd1(XNandPs *InstancePtr, u32 EccCmd)
 		(XNANDPS_ECC_MEMCMD1_OFFSET(XNANDPS_IF1_ECC_OFFSET)),
 		EccCmd);
 }
+#endif
 
 /*****************************************************************************/
 /**
@@ -334,6 +343,7 @@ static void XNandPs_EccSetMemCmd1(XNandPs *InstancePtr, u32 EccCmd)
 * @note		None
 *
 *****************************************************************************/
+#if 0
 static void XNandPs_EccSetMemCmd2(XNandPs *InstancePtr, u32 EccCmd)
 {
 	/*
@@ -343,6 +353,7 @@ static void XNandPs_EccSetMemCmd2(XNandPs *InstancePtr, u32 EccCmd)
 		(XNANDPS_ECC_MEMCMD2_OFFSET(XNANDPS_IF1_ECC_OFFSET)),
 		EccCmd);
 }
+#endif
 
 /*****************************************************************************/
 /**
@@ -358,6 +369,7 @@ static void XNandPs_EccSetMemCmd2(XNandPs *InstancePtr, u32 EccCmd)
 *****************************************************************************/
 static void XNandPs_EccDisable(XNandPs *InstancePtr)
 {
+#if 0
 	u32 EccConfig = 0;
 	/*
 	 * Bypass the ECC block in the SMC controller
@@ -367,6 +379,9 @@ static void XNandPs_EccDisable(XNandPs *InstancePtr)
 
 	EccConfig &= ~XNANDPS_ECC_MEMCFG_ECC_MODE_MASK;
 	XNandPs_EccSetCfg(InstancePtr, EccConfig);
+#endif
+	while (smc_353_ecc_busy(&InstancePtr->SmcDriver, NAND));
+	smc_353_ecc_set_mode(&InstancePtr->SmcDriver, NAND, BYPASSED);
 }
 
 /*****************************************************************************/
@@ -386,17 +401,25 @@ static void XNandPs_EccDisable(XNandPs *InstancePtr)
 static int XNandPs_EccHwInit(XNandPs *InstancePtr)
 {
 	u32 PageSize;
+#if 0
 	u32 EccConfig = 0;
+#endif
 
 	PageSize = InstancePtr->Geometry.BytesPerPage;
 	/*
 	 * Set the ECC mem command1 and ECC mem command2 register
 	 */
+#if 0
 	XNandPs_EccSetMemCmd1(InstancePtr, XNANDPS_ECC_CMD1);
 	XNandPs_EccSetMemCmd2(InstancePtr, XNANDPS_ECC_CMD2);
+#endif
+	while (smc_353_ecc_busy(&InstancePtr->SmcDriver, NAND));
+	smc_353_ecc_set_memcmd0(&InstancePtr->SmcDriver, NAND, true, 0x30, 0x0, 0x80);
+	smc_353_ecc_set_memcmd1(&InstancePtr->SmcDriver, NAND, true, 0xE0, 0x5, 0x85);
 	/*
 	 * Configure HW ECC block
 	 */
+#if 0
 	switch(PageSize) {
 		case XNANDPS_PAGE_SIZE_512:
 			EccConfig = (XNANDPS_ECC_MEMCFG |
@@ -418,6 +441,28 @@ static int XNandPs_EccHwInit(XNandPs *InstancePtr)
 			return XST_FAILURE;
 	}
 	XNandPs_EccSetCfg(InstancePtr, EccConfig);
+#endif
+	while (smc_353_ecc_busy(&InstancePtr->SmcDriver, NAND));
+	smc_353_ecc_set_mode(&InstancePtr->SmcDriver, NAND, CALCULATE_APB);
+	smc_353_ecc_set_read_end(&InstancePtr->SmcDriver, NAND, READ_AFTER_PAGE);
+	smc_353_ecc_set_jump(&InstancePtr->SmcDriver, NAND, NO_JUMP);
+	switch(PageSize) {
+		case XNANDPS_PAGE_SIZE_512:
+			smc_353_ecc_set_page_size(&InstancePtr->SmcDriver, NAND, PS_512);
+			break;
+		case XNANDPS_PAGE_SIZE_1024:
+			smc_353_ecc_set_page_size(&InstancePtr->SmcDriver, NAND, PS_1024);
+			break;
+		case XNANDPS_PAGE_SIZE_2048:
+			smc_353_ecc_set_page_size(&InstancePtr->SmcDriver, NAND, PS_2048);
+			break;
+		default:
+			/*
+			 * Page size 256 bytes & 4096 bytes not supported
+			 * by ECC block
+			 */
+			return XST_FAILURE;
+	}
 
 	return XST_SUCCESS;
 }
@@ -541,8 +586,13 @@ int XNandPs_Read(XNandPs *InstancePtr, u64 Offset, u32 Length, void *DestPtr,
 	 * Restore the ECC mem command1 and ECC mem command2 register
 	 * if the previous command is read page cache.
 	 */
+#if 0
 	XNandPs_EccSetMemCmd1(InstancePtr, XNANDPS_ECC_CMD1);
 	XNandPs_EccSetMemCmd2(InstancePtr, XNANDPS_ECC_CMD2);
+#endif
+	while (smc_353_ecc_busy(&InstancePtr->SmcDriver, NAND));
+	smc_353_ecc_set_memcmd0(&InstancePtr->SmcDriver, NAND, true, 0x30, 0x0, 0x80);
+	smc_353_ecc_set_memcmd1(&InstancePtr->SmcDriver, NAND, true, 0xE0, 0x5, 0x85);
 
 	while (Length) {
 		/*
@@ -574,9 +624,12 @@ int XNandPs_Read(XNandPs *InstancePtr, u64 Offset, u32 Length, void *DestPtr,
 		/*
 		 * Clear the interrupt condition
 		 */
+#if 0
 		XNandPs_WriteReg((InstancePtr->Config.SmcBase +
 					XNANDPS_MEMC_CLR_CONFIG_OFFSET),
 				XNANDPS_MEMC_CLR_CONFIG_INT_CLR1_MASK);
+#endif
+		smc_353_int_clear(&InstancePtr->SmcDriver, NAND);
 
 		/*
 		 *  Read the page data
@@ -647,7 +700,9 @@ int XNandPs_ReadCache(XNandPs *InstancePtr, u64 Offset, u32 Length,
 	u8 *BufPtr;
 	u8 *Ptr = (u8 *)DestPtr;
 	u32 NumPages;
+#if 0
 	u32 EccConfig = 0;
+#endif
 
 	Xil_AssertNonvoid(InstancePtr != NULL);
 	Xil_AssertNonvoid(DestPtr != NULL);
@@ -684,11 +739,15 @@ int XNandPs_ReadCache(XNandPs *InstancePtr, u64 Offset, u32 Length,
 	/*
 	 * Change ECC commands in ECC registers for page cache support
 	 */
+#if 0
 	EccConfig |= ONFI_CMD_PAGE_CACHE_PROGRAM1;
 	EccConfig |= ONFI_CMD_READ_CACHE_ENHANCED1 << 8;
 	EccConfig |= ONFI_CMD_READ_CACHE_ENHANCED2 << 16;
 	EccConfig |= (XNANDPS_ECC_MEMCOMMAND1_RD_CMD_END_VALID_MASK);
 	XNandPs_EccSetMemCmd1(InstancePtr, EccConfig);
+#endif
+	while (smc_353_ecc_busy(&InstancePtr->SmcDriver, NAND));
+	smc_353_ecc_set_memcmd0(&InstancePtr->SmcDriver, NAND, true, ONFI_CMD_READ_CACHE_ENHANCED2, ONFI_CMD_READ_CACHE_ENHANCED1, ONFI_CMD_PAGE_CACHE_PROGRAM1);
 
 	/*
 	 * Send the ONFI Read command
@@ -704,9 +763,12 @@ int XNandPs_ReadCache(XNandPs *InstancePtr, u64 Offset, u32 Length,
 	/*
 	 * Clear the interrupt condition
 	 */
+#if 0
 	XNandPs_WriteReg((InstancePtr->Config.SmcBase +
 				XNANDPS_MEMC_CLR_CONFIG_OFFSET),
 			XNANDPS_MEMC_CLR_CONFIG_INT_CLR1_MASK);
+#endif
+	smc_353_int_clear(&InstancePtr->SmcDriver, NAND);
 
 	/*
 	 * Check ONFI Status Register
@@ -736,6 +798,7 @@ int XNandPs_ReadCache(XNandPs *InstancePtr, u64 Offset, u32 Length,
 			 * Change ECC commands in ECC registers to check
 			 * change read column for ECC calculation
 			 */
+#if 0
 			EccConfig = 0;
 			EccConfig |= ONFI_CMD_PAGE_CACHE_PROGRAM1;
 			EccConfig |= ONFI_CMD_CHANGE_READ_COLUMN1 << 8;
@@ -743,6 +806,11 @@ int XNandPs_ReadCache(XNandPs *InstancePtr, u64 Offset, u32 Length,
 			EccConfig |=
 				XNANDPS_ECC_MEMCOMMAND1_RD_CMD_END_VALID_MASK;
 			XNandPs_EccSetMemCmd1(InstancePtr, EccConfig);
+#endif
+			while (smc_353_ecc_busy(&InstancePtr->SmcDriver, NAND));
+			smc_353_ecc_set_memcmd0(&InstancePtr->SmcDriver, NAND, true,
+				ONFI_CMD_CHANGE_READ_COLUMN2, ONFI_CMD_CHANGE_READ_COLUMN1,
+				ONFI_CMD_PAGE_CACHE_PROGRAM1);
 
 			/*
 			 * Send NAND page cache end command 0x3F
@@ -766,9 +834,12 @@ int XNandPs_ReadCache(XNandPs *InstancePtr, u64 Offset, u32 Length,
 		/*
 		 * Clear the interrupt condition
 		 */
+#if 0
 		XNandPs_WriteReg((InstancePtr->Config.SmcBase +
 					XNANDPS_MEMC_CLR_CONFIG_OFFSET),
 				XNANDPS_MEMC_CLR_CONFIG_INT_CLR1_MASK);
+#endif
+		smc_353_int_clear(&InstancePtr->SmcDriver, NAND);
 
 		if (NumPages <= 1) {
 			XNandPs_SendCommand(InstancePtr,
@@ -1232,9 +1303,12 @@ int XNandPs_ReadSpareBytes(XNandPs *InstancePtr, u32 Page, u8 *Buf)
 	/*
 	 * Clear the interrupt condition
 	 */
+#if 0
 	XNandPs_WriteReg((InstancePtr->Config.SmcBase +
 			XNANDPS_MEMC_CLR_CONFIG_OFFSET),
 			XNANDPS_MEMC_CLR_CONFIG_INT_CLR1_MASK);
+#endif
+	smc_353_int_clear(&InstancePtr->SmcDriver, NAND);
 
 	/*
 	 * Check ONFI Status Register
@@ -1347,9 +1421,12 @@ int XNandPs_WriteSpareBytes(XNandPs *InstancePtr, u32 Page, u8 *Buf)
 	/*
 	 * Clear the interrupt condition
 	 */
+#if 0
 	XNandPs_WriteReg((InstancePtr->Config.SmcBase +
 			XNANDPS_MEMC_CLR_CONFIG_OFFSET),
 			XNANDPS_MEMC_CLR_CONFIG_INT_CLR1_MASK);
+#endif
+	smc_353_int_clear(&InstancePtr->SmcDriver, NAND);
 	/*
 	 * Check SR[0] bit
 	 */
@@ -1390,9 +1467,12 @@ static int XNandPs_IsBusy(XNandPs *InstancePtr)
 	/*
 	 * Read the memory controller status register
 	 */
+#if 0
 	Status = XNandPs_ReadReg(InstancePtr->Config.SmcBase +
 			XNANDPS_MEMC_STATUS_OFFSET) &
 		XNANDPS_MEMC_STATUS_RAW_INT_STATUS1_MASK;
+#endif
+	Status = smc_353_int_status_raw(&InstancePtr->SmcDriver, NAND);
 
 	if (Status) {
 		return FALSE;
@@ -1425,15 +1505,21 @@ static int XNandPs_EccCalculate(XNandPs *InstancePtr, u8 *EccData)
 	/*
 	 * Check the busy status of the ECC block
 	 */
+#if 0
 	while (XNandPs_ReadReg(InstancePtr->Config.SmcBase +
 		XNANDPS_ECC_STATUS_OFFSET(XNANDPS_IF1_ECC_OFFSET)) &
 		XNANDPS_ECC_STATUS_MASK);
+#endif
+	while (smc_353_ecc_busy(&InstancePtr->SmcDriver, NAND));
 
 	for(EccReg = 0; EccReg < 4; EccReg++) {
 
+#if 0
 		EccValue = XNandPs_ReadReg(InstancePtr->Config.SmcBase +
 			XNANDPS_ECC_VALUE0_OFFSET(XNANDPS_IF1_ECC_OFFSET +
 				(EccReg * 4)));
+#endif
+		EccValue = smc_353_ecc_block_value(&InstancePtr->SmcDriver, NAND, EccReg);
 		EccStatus = (EccValue >> 24) & 0xFF;
 
 		/*
@@ -1817,9 +1903,12 @@ static int XNandPs_WritePage_HwEcc(XNandPs *InstancePtr, u8 *SrcPtr, uint32_t en
 	/*
 	 * Clear the interrupt condition
 	 */
+#if 0
 	XNandPs_WriteReg((InstancePtr->Config.SmcBase +
 				XNANDPS_MEMC_CLR_CONFIG_OFFSET),
 				XNANDPS_MEMC_CLR_CONFIG_INT_CLR1_MASK);
+#endif
+	smc_353_int_clear(&InstancePtr->SmcDriver, NAND);
 
 	/*
 	 * Send the ONFI Read end command
@@ -1902,9 +1991,12 @@ static int XNandPs_WritePage(XNandPs *InstancePtr, u8 *SrcPtr, uint32_t end_comm
 	/*
 	 * Clear the interrupt condition
 	 */
+#if 0
 	XNandPs_WriteReg((InstancePtr->Config.SmcBase +
 				XNANDPS_MEMC_CLR_CONFIG_OFFSET),
 				XNANDPS_MEMC_CLR_CONFIG_INT_CLR1_MASK);
+#endif
+	smc_353_int_clear(&InstancePtr->SmcDriver, NAND);
 
 	/*
 	 * Check SR[0] bit
@@ -1964,9 +2056,12 @@ int XNandPs_EraseBlock(XNandPs *InstancePtr, u32 BlockNum)
 	/*
 	 * Clear the interrupt condition
 	 */
+#if 0
 	XNandPs_WriteReg((InstancePtr->Config.SmcBase +
 				XNANDPS_MEMC_CLR_CONFIG_OFFSET),
 			XNANDPS_MEMC_CLR_CONFIG_INT_CLR1_MASK);
+#endif
+	smc_353_int_clear(&InstancePtr->SmcDriver, NAND);
 
 	/*
 	 * Check the SR[0] whether the erase operation is successful or not
