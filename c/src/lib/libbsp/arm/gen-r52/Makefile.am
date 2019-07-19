@@ -75,6 +75,9 @@ librtemsbsp_a_SOURCES += ../../../../../../bsps/arm/shared/dma/alt_dma_program.c
 # MMU
 librtemsbsp_a_SOURCES += ../../../../../../bsps/arm/shared/mmu/mmu_500.c
 
+# SMC
+librtemsbsp_a_SOURCES += ../../../../../../bsps/arm/shared/smc/smc_353.c
+
 # WDT
 librtemsbsp_a_SOURCES += ../../../../../../bsps/arm/gen-r52/wdt/hpsc-wdt.c
 
