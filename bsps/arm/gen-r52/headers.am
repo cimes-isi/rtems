@@ -25,6 +25,7 @@ include_bsp_HEADERS += ../../../../../../bsps/arm/gen-r52/include/bsp/xil_types.
 include_bsp_HEADERS += ../../../../../../bsps/arm/gen-r52/include/bsp/xil_assert.h
 include_bsp_HEADERS += ../../../../../../bsps/arm/gen-r52/include/bsp/xil_printf.h
 include_bsp_HEADERS += ../../../../../../bsps/arm/gen-r52/include/bsp/xnandps_blkdev.h
+include_bsp_HEADERS += ../../../../../../bsps/arm/gen-r52/include/bsp/mpu.h
 include_bsp_HEADERS += ../../../../../../bsps/include/bsp/dma.h
 include_bsp_HEADERS += ../../../../../../bsps/arm/include/bsp/dma_330.h
 include_bsp_HEADERS += ../../../../../../bsps/arm/include/bsp/alt_adapter.h
